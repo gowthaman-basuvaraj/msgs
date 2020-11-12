@@ -25,8 +25,6 @@ import com.google.android.gms.drive.MetadataChangeSet
 import com.webianks.hatkemessenger.R
 import com.webianks.hatkemessenger.activities.SettingsActivity
 import com.webianks.hatkemessenger.constants.Constants
-import com.webianks.hatkemessenger.tasks.EditContentsAsyncTask
-import com.webianks.hatkemessenger.tasks.RetrieveDriveFileContentsAsyncTask
 
 class SettingsActivity : AppCompatActivity(), ConnectionCallbacks, OnConnectionFailedListener {
     /*@Override
@@ -63,11 +61,9 @@ class SettingsActivity : AppCompatActivity(), ConnectionCallbacks, OnConnectionF
         val driveId = result.metadataBuffer[0].driveId
         if (type == Constants.TYPE_RESTORE) {
             //for retrieving the content of the file
-            RetrieveDriveFileContentsAsyncTask(this@SettingsActivity).execute(driveId)
         } else {
             //for editing the content of the file
             val file = driveId.asDriveFile()
-            EditContentsAsyncTask(this@SettingsActivity).execute(file)
         }
     }
 
@@ -87,7 +83,6 @@ class SettingsActivity : AppCompatActivity(), ConnectionCallbacks, OnConnectionF
             return@ResultCallback
         }
         val file = result.driveFile
-        EditContentsAsyncTask(this@SettingsActivity).execute(file)
 
         //showMessage("Created a file in App Folder: ");
     }
