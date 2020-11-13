@@ -65,7 +65,7 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
     }
 
     override fun getItemCount(): Int {
-        return data?.size ?: 0
+        return data.size
     }
 
     fun setItemClickListener(itemClickListener: ItemCLickListener?) {
@@ -84,9 +84,16 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
 
         override fun onClick(view: View) {
             if (itemClickListener != null) {
-                data!![adapterPosition]?.readState = "1"
+                data[adapterPosition].readState = "1"
                 notifyItemChanged(adapterPosition)
-                data[adapterPosition]?.color?.let { data[adapterPosition]?.id?.let { it1 -> itemClickListener!!.itemClicked(it, data[adapterPosition]?.address, senderContact.text.toString(), it1, data[adapterPosition]?.readState) } }
+
+                itemClickListener?.itemClicked(
+                        data[adapterPosition].color,
+                        data[adapterPosition].address,
+                        senderContact.text.toString(),
+                        data[adapterPosition].id,
+                        data[adapterPosition].readState
+                )
             }
         }
 

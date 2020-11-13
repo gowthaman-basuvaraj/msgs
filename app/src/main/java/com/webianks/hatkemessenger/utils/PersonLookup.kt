@@ -4,10 +4,16 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.ContactsContract
+import java.util.*
+import kotlin.collections.LinkedHashMap
 
 class PersonLookup(private val context: Context) {
 
     companion object {
+        private val nameCheck = Regex("[A-Z]{2}\\-[A-Z]{6}")
+        private val numberCheck = Regex("[A-Z]{2}\\-[0-9]{6}")
+
+
         const val MAX_SIZE = 500
         val cache: MutableMap<String, LocalContact> = object : LinkedHashMap<String, LocalContact>() {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, LocalContact>?): Boolean {
@@ -17,6 +23,8 @@ class PersonLookup(private val context: Context) {
     }
 
     fun lookupPerson(address: String?): LocalContact? {
+
+
         if (address.isNullOrEmpty()) {
             return null
         }
@@ -26,11 +34,22 @@ class PersonLookup(private val context: Context) {
         }
 
 
+        val input = address.toUpperCase(Locale.ROOT)
+        val senderNo = if (nameCheck.matches(input) || numberCheck.matches(input)) {
+            address.split("-").last()
+        } else {
+            address
+        }
+
+        val localContact = LocalContact(name = address, phone = address, normPhone = senderNo)
+
+
+
+
         return cache.getOrPut(address, {
             val name = getContactName(address)
-            val localContact = LocalContact(name = address, phone = address)
             if (name.isNullOrEmpty()) localContact
-            else LocalContact(name, address)
+            else LocalContact(name, address, normPhone = senderNo)
         })
     }
 
@@ -59,4 +78,4 @@ class PersonLookup(private val context: Context) {
 
 }
 
-data class LocalContact(val name: String, val phone: String)
+data class LocalContact(val name: String, val phone: String, val normPhone: String)

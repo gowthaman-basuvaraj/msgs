@@ -24,9 +24,6 @@ import java.util.*
  */
 class SmsReceiver : BroadcastReceiver() {
     private val TAG = SmsReceiver::class.java.simpleName
-    private val nameCheck = Regex("[A-Z]{2}\\-[A-Z]{6}")
-    private val numberCheck = Regex("[A-Z]{2}\\-[0-9]{6}")
-
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == "android.provider.Telephony.SMS_RECEIVED") {
             Log.e(TAG, "smsReceiver")
@@ -41,18 +38,12 @@ class SmsReceiver : BroadcastReceiver() {
                 //first 2 will change but the last 6 will remain same,
                 //lets group by last 6 if it matched the pattern
 
-                val input = senderNoOriginal.toUpperCase(Locale.ROOT)
 
-                val senderNo = if (nameCheck.matches(input) || numberCheck.matches(input)) {
-                    senderNoOriginal.split("-").last()
-                } else {
-                    senderNoOriginal
-                }
-
-                val lookupPerson = PersonLookup(context).lookupPerson(senderNo)
-                val cn = lookupPerson?.name ?: senderNo
+                val lookupPerson = PersonLookup(context).lookupPerson(senderNoOriginal)
+                val cn = lookupPerson?.name ?: lookupPerson?.normPhone ?: senderNoOriginal
                 createChannel(cn, "SMS Notifications", context)
-                issueNotification(context, senderNo, message, cn)
+                issueNotification(context, lookupPerson?.normPhone ?: senderNoOriginal, message, cn)
+
                 saveSmsInInbox(context,
                         currentSMS.displayOriginatingAddress,
                         currentSMS.displayMessageBody,

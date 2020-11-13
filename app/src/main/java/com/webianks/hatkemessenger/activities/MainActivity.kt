@@ -27,11 +27,11 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.webianks.hatkemessenger.R
 import com.webianks.hatkemessenger.SMS
-import com.webianks.hatkemessenger.activities.MainActivity
 import com.webianks.hatkemessenger.adapters.AllConversationAdapter
 import com.webianks.hatkemessenger.adapters.ItemCLickListener
 import com.webianks.hatkemessenger.constants.Constants
 import com.webianks.hatkemessenger.constants.SmsContract
+import com.webianks.hatkemessenger.utils.PersonLookup
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import kotlin.collections.ArrayList
@@ -225,7 +225,7 @@ class MainActivity : AppCompatActivity(),
                 null,
                 selection,
                 selectionArgs,
-                SmsContract.SORT_DESC)
+                SmsContract.SORT_DESC +" limit 100")
     }
 
     override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
@@ -261,6 +261,7 @@ class MainActivity : AppCompatActivity(),
         supportLoaderManager.destroyLoader(Constants.ALL_SMS_LOADER)
     }
 
+    private val lookup = PersonLookup(this)
     private fun getAllSmsToFile(c: Cursor) {
         val lstSms: MutableList<SMS> = arrayListOf()
         lateinit var objSMS: SMS
@@ -298,18 +299,6 @@ class MainActivity : AppCompatActivity(),
         val s: Set<SMS> = LinkedHashSet(lstSms)
         data = ArrayList(s)
         setRecyclerView(data)
-        convertToJson(lstSms)
     }
 
-    private fun convertToJson(lstSms: List<SMS>?) {
-        val listType = object : TypeToken<List<SMS?>?>() {}.type
-        val gson = Gson()
-        val json = gson.toJson(lstSms, listType)
-        val sp = getSharedPreferences(Constants.PREF_NAME, Context.MODE_PRIVATE)
-        val editor = sp.edit()
-        editor.putString(Constants.SMS_JSON, json)
-        editor.apply()
-        //List<String> target2 = gson.fromJson(json, listType);
-        //Log.d(TAG, json);
-    }
 }
