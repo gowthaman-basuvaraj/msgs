@@ -1,5 +1,6 @@
 package com.webianks.hatkemessenger.receivers
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -24,6 +25,8 @@ import java.util.*
  */
 class SmsReceiver : BroadcastReceiver() {
     private val TAG = SmsReceiver::class.java.simpleName
+
+    @SuppressLint("NewApi")
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == "android.provider.Telephony.SMS_RECEIVED") {
             Log.e(TAG, "smsReceiver")
@@ -41,9 +44,20 @@ class SmsReceiver : BroadcastReceiver() {
 
                 val lookupPerson = PersonLookup(context).lookupPerson(senderNoOriginal)
                 val cn = lookupPerson?.name ?: lookupPerson?.normPhone ?: senderNoOriginal
-                createChannel(cn, "SMS Notifications", context)
-                issueNotification(context, lookupPerson?.normPhone ?: senderNoOriginal, message, cn)
-
+                val senderNo = lookupPerson?.normPhone ?: senderNoOriginal
+                val existingNC = getChannel(senderNo, context)
+                if (existingNC != null) {
+                    if (existingNC.importance != NotificationManager.IMPORTANCE_NONE) {
+                        issueNotification(context, senderNo, message, cn)
+                    } else {
+                        //do not issue
+                    }
+                } else {
+                    //create a channal but set it to no notify...
+                    createChannel(cn, "SMS Notifications", context)
+                    //we will not notify by default :P
+                    //issueNotification(context, senderNo, message, cn)
+                }
                 saveSmsInInbox(context,
                         currentSMS.displayOriginatingAddress,
                         currentSMS.displayMessageBody,
@@ -100,8 +114,26 @@ class SmsReceiver : BroadcastReceiver() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(senderNo, senderNo, NotificationManager.IMPORTANCE_DEFAULT).apply {
                 description = message
+                importance = getImportanceLevel(senderNo)
             }
             mNotifyMgr.createNotificationChannel(channel)
+        }
+    }
+
+    @SuppressLint("InlinedApi")
+    private fun getImportanceLevel(senderNo: String): Int {
+        //by default we will not notify for anything
+        //however we will notify based on preference
+        return NotificationManager.IMPORTANCE_NONE
+    }
+
+    private fun getChannel(senderNo: String, context: Context): NotificationChannel? {
+        val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mNotifyMgr.getNotificationChannel(senderNo)
+        } else {
+            null
         }
     }
 
