@@ -2,6 +2,7 @@ package com.webianks.hatkemessenger.activities
 
 import android.Manifest
 import android.app.SearchManager
+import android.app.role.RoleManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -43,7 +44,7 @@ class MainActivity : AppCompatActivity(),
 
     private var allConversationAdapter: AllConversationAdapter? = null
     private var mCurFilter: String? = null
-    private var data: ArrayList<SMS>? = null
+    private var data: MutableList<SMS> = arrayListOf()
     private var mReceiver: BroadcastReceiver? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,47 +66,59 @@ class MainActivity : AppCompatActivity(),
                         Manifest.permission.READ_SMS)
                 != PackageManager.PERMISSION_GRANTED) {
 
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_SMS),
-                        Constants.MY_PERMISSIONS_REQUEST_READ_SMS)
-        }else {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_SMS),
+                    Constants.MY_PERMISSIONS_REQUEST_READ_SMS)
+        } else {
             if (ContextCompat.checkSelfPermission(this,
                             Manifest.permission.READ_CONTACTS)
                     != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_CONTACTS),
                         Constants.MY_PERMISSIONS_REQUEST_READ_CONTACTS)
-            }else{
+            } else {
                 LoaderManager.getInstance(this).initLoader(Constants.ALL_SMS_LOADER, null, this)
             }
         }
     }
 
     private fun checkDefaultSettings(): Boolean {
-        var isDefault = false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            isDefault = if (Telephony.Sms.getDefaultSmsPackage(this) != packageName) {
-                val builder = MaterialAlertDialogBuilder(this@MainActivity)
-                builder.setMessage("This app is not set as your default messaging app. Do you want to set it as default?")
-                        .setCancelable(false)
-                        .setNegativeButton("No") { dialog: DialogInterface, _: Int ->
-                            dialog.dismiss()
-                            checkPermissions()
-                        }
-                        .setPositiveButton("Yes") { _: DialogInterface?, id: Int ->
-                            val intent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT)
-                            intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
-                            startActivity(intent)
-                            checkPermissions()
-                        }
-                builder.show()
-                false
-            } else true
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(RoleManager::class.java)!!
+            val b = roleManager.isRoleAvailable(RoleManager.ROLE_SMS) && roleManager.isRoleHeld(RoleManager.ROLE_SMS)
+            if (!b) {
+                val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_SMS)
+                startActivityForResult(intent, Constants.MY_PERMISSIONS_REQUEST_READ_SMS)
+            }
+            b
+        } else {
+            if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                if (Telephony.Sms.getDefaultSmsPackage(this) != packageName) {
+                    val builder = MaterialAlertDialogBuilder(this@MainActivity)
+                    builder.setMessage("This app is not set as your default messaging app. Do you want to set it as default?")
+                            .setCancelable(false)
+                            .setNegativeButton("No") { dialog: DialogInterface, _: Int ->
+                                dialog.dismiss()
+                                checkPermissions()
+                            }
+                            .setPositiveButton("Yes") { _, _ ->
+                                val intent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT)
+                                intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
+                                startActivity(intent)
+                                checkPermissions()
+                            }
+                    builder.show()
+                    false
+                } else {
+                    true
+                }
+            } else {
+                true
+            }
         }
-        return isDefault
     }
 
-    private fun setRecyclerView(data: ArrayList<SMS>?) {
+    private fun setRecyclerView(data: MutableList<SMS>) {
         allConversationAdapter = AllConversationAdapter(this, data)
-        allConversationAdapter!!.setItemClickListener(this)
+        allConversationAdapter?.setItemClickListener(this)
         recyclerview.adapter = allConversationAdapter
     }
 
@@ -225,8 +238,8 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onLoaderReset(loader: Loader<Cursor?>) {
-        data = null
-        if (allConversationAdapter != null) allConversationAdapter!!.notifyDataSetChanged()
+        data.clear()
+        allConversationAdapter?.notifyDataSetChanged()
         //allConversationAdapter.swapCursor(null);
     }
 
@@ -249,7 +262,7 @@ class MainActivity : AppCompatActivity(),
     }
 
     private fun getAllSmsToFile(c: Cursor) {
-        val lstSms: ArrayList<SMS>?  = arrayListOf()
+        val lstSms: MutableList<SMS> = arrayListOf()
         lateinit var objSMS: SMS
         val totalSMS = c.count
         if (c.moveToFirst()) {
@@ -269,7 +282,7 @@ class MainActivity : AppCompatActivity(),
                     }
                 } catch (e: Exception) {
                 } finally {
-                    lstSms?.add(objSMS)
+                    lstSms.add(objSMS)
                     c.moveToNext()
                 }
             }
