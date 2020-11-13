@@ -5,6 +5,7 @@ import android.database.Cursor
 import android.graphics.Typeface
 import android.net.Uri
 import android.provider.ContactsContract
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnLongClickListener
@@ -42,14 +43,19 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
     private val lookup = PersonLookup(this.context)
     override fun onBindViewHolder(holder: MyHolder, position: Int) {
         val sms = data[position]
+
         val savedContactName = lookup.lookupPerson(sms.address)?.name ?: sms.address ?: "NA"
-        holder.senderContact.text = savedContactName;
+        Log.w("LIST", "${sms.address} => $savedContactName")
+        holder.senderContact.text = savedContactName
         holder.message.text = sms.msg
-        val color = sms.address?.let { generator?.getColor(it) }
+
+        val color = savedContactName.let { generator?.getColor(it) }
         val firstChar = savedContactName[0].toString()
         val drawable = TextDrawable.builder().buildRound(firstChar, color!!)
+
         holder.senderImage.setImageDrawable(drawable)
         sms.color = color
+
         if (sms.readState == "0") {
             holder.senderContact.setTypeface(holder.senderContact.typeface, Typeface.BOLD)
             holder.message.setTypeface(holder.message.typeface, Typeface.BOLD)

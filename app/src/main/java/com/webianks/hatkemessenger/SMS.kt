@@ -6,6 +6,7 @@ package com.webianks.hatkemessenger
 class SMS {
     var id: Long = 0
     var address: String? = null
+    var normAddress: String? = null
     var msg: String? = null
     var readState //"0" for have not read sms and "1" for have read sms
             : String? = null
@@ -15,11 +16,11 @@ class SMS {
 
     override fun equals(obj: Any?): Boolean {
         val sms = obj as SMS?
-        return address == sms!!.address
+        return normAddress == sms!!.normAddress
     }
 
     override fun hashCode(): Int {
-        return address.hashCode()
+        return normAddress.hashCode()
     }
 
 }

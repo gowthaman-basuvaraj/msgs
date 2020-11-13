@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.ContactsContract
+import android.util.Log
 import java.util.*
 import kotlin.collections.LinkedHashMap
 
@@ -29,9 +30,6 @@ class PersonLookup(private val context: Context) {
             return null
         }
 
-        if (address.length < 10) {
-            return null
-        }
 
 
         val input = address.toUpperCase(Locale.ROOT)
@@ -40,15 +38,19 @@ class PersonLookup(private val context: Context) {
         } else {
             address
         }
+        Log.w("LOOKUP", "$input -> $senderNo")
 
-        val localContact = LocalContact(name = address, phone = address, normPhone = senderNo)
+        val defLocalContact = LocalContact(name = senderNo, phone = address, normPhone = senderNo)
 
+        if (address.length < 10) {
+            return defLocalContact
+        }
 
 
 
         return cache.getOrPut(address, {
             val name = getContactName(address)
-            if (name.isNullOrEmpty()) localContact
+            if (name.isNullOrEmpty()) defLocalContact
             else LocalContact(name, address, normPhone = senderNo)
         })
     }

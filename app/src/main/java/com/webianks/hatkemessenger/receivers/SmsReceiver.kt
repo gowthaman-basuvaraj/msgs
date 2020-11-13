@@ -75,83 +75,98 @@ class SmsReceiver : BroadcastReceiver() {
         // End of loop
     } // bundle null
 
-}
+    private fun showOTP(from: String, otp: String, context: Context){
+        val notificationBuilder =
+                NotificationCompat.Builder(context, "OTP-$from")
+                        .setSmallIcon(R.drawable.ic_notifications_black_24dp)
+                        .setContentTitle("OTP from $from")
+                        .setContentText(otp)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setCategory(NotificationCompat.CATEGORY_ALARM)
+                        .addAction(R.drawable.ic_sync_black_24dp, "Copy", null)
 
-private fun saveSmsInInbox(context: Context, sender: String, mesg: String, date: Long) {
-    val serviceIntent = Intent(context, SaveSmsService::class.java)
-    serviceIntent.putExtra("sender_no", sender)
-    serviceIntent.putExtra("message", mesg)
-    serviceIntent.putExtra("date", date)
-    context.startService(serviceIntent)
-}
-
-private fun issueNotification(context: Context, senderNo: String, message: String, cn: String) {
-    val resultIntent = Intent(context, SmsDetailedView::class.java)
-    resultIntent.putExtra(Constants.CONTACT_NAME, senderNo)
-    resultIntent.putExtra(Constants.FROM_SMS_RECIEVER, true)
-    val resultPendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            resultIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
-    )
-
-    val icon = BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher)
-    val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+         notificationBuilder.build()
 
 
-    val mBuilder = NotificationCompat.Builder(context, cn)
-            .setLargeIcon(icon)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(cn)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setAutoCancel(true)
-            .setContentText(message)
-            .setContentIntent(resultPendingIntent)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+    }
 
-    val mNotificationId = 10001
-    mNotifyMgr.notify(mNotificationId, mBuilder.build())
 
-}
+    private fun saveSmsInInbox(context: Context, sender: String, mesg: String, date: Long) {
+        val serviceIntent = Intent(context, SaveSmsService::class.java)
+        serviceIntent.putExtra("sender_no", sender)
+        serviceIntent.putExtra("message", mesg)
+        serviceIntent.putExtra("date", date)
+        context.startService(serviceIntent)
+    }
 
-private fun createChannel(senderNo: String, message: String, context: Context) {
-    val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private fun issueNotification(context: Context, senderNo: String, message: String, cn: String) {
+        val resultIntent = Intent(context, SmsDetailedView::class.java)
+        resultIntent.putExtra(Constants.CONTACT_NAME, senderNo)
+        resultIntent.putExtra(Constants.FROM_SMS_RECIEVER, true)
+        val resultPendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                resultIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val channel = NotificationChannel(senderNo, senderNo, NotificationManager.IMPORTANCE_DEFAULT).apply {
-            description = message
-            importance = getImportanceLevel(senderNo)
+        val icon = BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher)
+        val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+
+        val mBuilder = NotificationCompat.Builder(context, cn)
+                .setLargeIcon(icon)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(cn)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                .setAutoCancel(true)
+                .setContentText(message)
+                .setContentIntent(resultPendingIntent)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+        val mNotificationId = 10001
+        mNotifyMgr.notify(mNotificationId, mBuilder.build())
+
+    }
+
+    private fun createChannel(senderNo: String, message: String, context: Context) {
+        val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(senderNo, senderNo, NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = message
+                importance = getImportanceLevel(senderNo)
+            }
+            mNotifyMgr.createNotificationChannel(channel)
         }
-        mNotifyMgr.createNotificationChannel(channel)
     }
-}
 
-@SuppressLint("InlinedApi")
-private fun getImportanceLevel(senderNo: String): Int {
-    //by default we will not notify for anything
-    //however we will notify based on preference
-    return NotificationManager.IMPORTANCE_NONE
-}
-
-private fun getChannel(senderNo: String, context: Context): NotificationChannel? {
-    val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        mNotifyMgr.getNotificationChannel(senderNo)
-    } else {
-        null
+    @SuppressLint("InlinedApi")
+    private fun getImportanceLevel(senderNo: String): Int {
+        //by default we will not notify for anything
+        //however we will notify based on preference
+        return NotificationManager.IMPORTANCE_NONE
     }
-}
 
-private fun getIncomingMessage(aObject: Any, bundle: Bundle): SmsMessage {
-    val currentSMS: SmsMessage
-    currentSMS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        val format = bundle.getString("format")
-        SmsMessage.createFromPdu(aObject as ByteArray, format)
-    } else {
-        SmsMessage.createFromPdu(aObject as ByteArray)
+    private fun getChannel(senderNo: String, context: Context): NotificationChannel? {
+        val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mNotifyMgr.getNotificationChannel(senderNo)
+        } else {
+            null
+        }
     }
-    return currentSMS
+
+    private fun getIncomingMessage(aObject: Any, bundle: Bundle): SmsMessage {
+        val currentSMS: SmsMessage
+        currentSMS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val format = bundle.getString("format")
+            SmsMessage.createFromPdu(aObject as ByteArray, format)
+        } else {
+            SmsMessage.createFromPdu(aObject as ByteArray)
+        }
+        return currentSMS
+    }
 }

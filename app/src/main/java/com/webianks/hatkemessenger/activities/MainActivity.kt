@@ -23,8 +23,6 @@ import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.webianks.hatkemessenger.R
 import com.webianks.hatkemessenger.SMS
 import com.webianks.hatkemessenger.adapters.AllConversationAdapter
@@ -263,6 +261,7 @@ class MainActivity : AppCompatActivity(),
         supportLoaderManager.destroyLoader(Constants.ALL_SMS_LOADER)
     }
 
+    val lookup = PersonLookup(this)
     private fun getAllSmsToFile(c: Cursor) {
         val lstSms: MutableList<SMS> = arrayListOf()
         lateinit var objSMS: SMS
@@ -273,7 +272,9 @@ class MainActivity : AppCompatActivity(),
                     objSMS = SMS()
                     objSMS.id = c.getLong(c.getColumnIndexOrThrow("_id"))
                     val num = c.getString(c.getColumnIndexOrThrow("address"))
+                    val lp = lookup.lookupPerson(num)
                     objSMS.address = num
+                    objSMS.normAddress = lp?.normPhone ?: num
                     objSMS.msg = c.getString(c.getColumnIndexOrThrow("body"))
                     objSMS.readState = c.getString(c.getColumnIndex("read"))
                     objSMS.time = c.getLong(c.getColumnIndexOrThrow("date"))
