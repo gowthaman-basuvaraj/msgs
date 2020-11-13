@@ -17,41 +17,54 @@ import com.webianks.hatkemessenger.activities.SmsDetailedView
 import com.webianks.hatkemessenger.constants.Constants
 import com.webianks.hatkemessenger.services.SaveSmsService
 import com.webianks.hatkemessenger.utils.PersonLookup
+import java.util.*
 
 /**
  * Created by R Ankit on 24-12-2016.
  */
 class SmsReceiver : BroadcastReceiver() {
     private val TAG = SmsReceiver::class.java.simpleName
+    private val nameCheck = Regex("[A-Z]{2}\\-[A-Z]{6}")
+    private val numberCheck = Regex("[A-Z]{2}\\-[0-9]{6}")
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == "android.provider.Telephony.SMS_RECEIVED") {
             Log.e(TAG, "smsReceiver")
-            val bundle = intent.extras
-            if (bundle != null) {
-                val pdu_Objects = bundle["pdus"] as Array<Any>?
-                if (pdu_Objects != null) {
-                    for (aObject in pdu_Objects) {
-                        val currentSMS = getIncomingMessage(aObject, bundle)
-                        val senderNo = currentSMS.displayOriginatingAddress
-                        val message = currentSMS.displayMessageBody
-                        val lookupPerson = PersonLookup(context).lookupPerson(senderNo)
-                        val cn = lookupPerson?.name ?: senderNo
-                        createChannel(cn, "SMS Notifications", context)
-                        issueNotification(context, senderNo, message, cn)
-                        saveSmsInInbox(context,
-                                currentSMS.displayOriginatingAddress,
-                                currentSMS.displayMessageBody,
-                                currentSMS.timestampMillis)
-                    }
-                    abortBroadcast()
-                    // End of loop
+            val bundle = intent.extras ?: return
+            val pdu_Objects = bundle["pdus"] as Array<Any>? ?: return
+            for (aObject in pdu_Objects) {
+                val currentSMS = getIncomingMessage(aObject, bundle)
+                val senderNoOriginal = currentSMS.displayOriginatingAddress
+                val message = currentSMS.displayMessageBody
+                //for INDIA, we get lot of SMS from Banks and other providers of this format
+                //2 Alphabets - (hyhen) 6 Alphabets
+                //first 2 will change but the last 6 will remain same,
+                //lets group by last 6 if it matched the pattern
+
+                val input = senderNoOriginal.toUpperCase(Locale.ROOT)
+
+                val senderNo = if (nameCheck.matches(input) || numberCheck.matches(input)) {
+                    senderNoOriginal.split("-").last()
+                } else {
+                    senderNoOriginal
                 }
+
+                val lookupPerson = PersonLookup(context).lookupPerson(senderNo)
+                val cn = lookupPerson?.name ?: senderNo
+                createChannel(cn, "SMS Notifications", context)
+                issueNotification(context, senderNo, message, cn)
+                saveSmsInInbox(context,
+                        currentSMS.displayOriginatingAddress,
+                        currentSMS.displayMessageBody,
+                        currentSMS.timestampMillis)
             }
+            abortBroadcast()
+            // End of loop
         } // bundle null
 
     }
 
-    private fun saveSmsInInbox(context: Context, sender: String, mesg: String, date: Long ) {
+    private fun saveSmsInInbox(context: Context, sender: String, mesg: String, date: Long) {
         val serviceIntent = Intent(context, SaveSmsService::class.java)
         serviceIntent.putExtra("sender_no", sender)
         serviceIntent.putExtra("message", mesg)
