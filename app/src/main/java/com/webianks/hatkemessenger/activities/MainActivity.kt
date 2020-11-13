@@ -130,8 +130,9 @@ class MainActivity : AppCompatActivity(),
 
     override fun onResume() {
         super.onResume()
-        val intentFilter = IntentFilter(
-                "android.intent.action.MAIN")
+
+        val intentFilter = IntentFilter("android.intent.action.MAIN")
+
         mReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val new_sms = intent.getBooleanExtra("new_sms", false)
@@ -139,6 +140,7 @@ class MainActivity : AppCompatActivity(),
             }
         }
         this.registerReceiver(mReceiver, intentFilter)
+        supportLoaderManager.restartLoader(Constants.ALL_SMS_LOADER, null, this@MainActivity)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -261,7 +263,6 @@ class MainActivity : AppCompatActivity(),
         supportLoaderManager.destroyLoader(Constants.ALL_SMS_LOADER)
     }
 
-    private val lookup = PersonLookup(this)
     private fun getAllSmsToFile(c: Cursor) {
         val lstSms: MutableList<SMS> = arrayListOf()
         lateinit var objSMS: SMS
