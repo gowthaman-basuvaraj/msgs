@@ -1,10 +1,10 @@
 package com.webianks.hatkemessenger.adapters
 
 import android.content.Context
-import android.database.Cursor
+import android.content.Intent
 import android.graphics.Typeface
 import android.net.Uri
-import android.provider.ContactsContract
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +15,7 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -24,6 +25,8 @@ import com.webianks.hatkemessenger.adapters.AllConversationAdapter.MyHolder
 import com.webianks.hatkemessenger.utils.ColorGeneratorModified
 import com.webianks.hatkemessenger.utils.Helpers
 import com.webianks.hatkemessenger.utils.PersonLookup
+import com.webianks.hatkemessenger.utils.createChannel
+
 
 /**
  * Created by R Ankit on 25-12-2016.
@@ -104,12 +107,15 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
         }
 
         override fun onLongClick(view: View): Boolean {
-            val items = arrayOf("Delete")
+            val items = arrayOf("Delete", "Mute/Un-Mute")
             val adapter = ArrayAdapter(context, android.R.layout.simple_list_item_1, android.R.id.text1, items)
             MaterialAlertDialogBuilder(context)
-                    .setAdapter(adapter) { dialogInterface, _ ->
+                    .setAdapter(adapter) { dialogInterface, idx ->
                         dialogInterface.dismiss()
-                        deleteDialog()
+                        if (idx == 0)
+                            deleteDialog()
+                        else
+                            muteDialog()
                     }
                     .show()
             return true
@@ -122,6 +128,21 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
             alert.setNegativeButton("No") { dialog, _ -> dialog.dismiss() }
             alert.create()
             alert.show()
+        }
+
+        private fun muteDialog() {
+            val senderNo = data[adapterPosition].normAddress!!
+
+            val intent: Intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    .putExtra(Settings.EXTRA_CHANNEL_ID, senderNo)
+
+            startActivity(this@AllConversationAdapter.context, intent, null)
+
+        }
+
+        private fun setNotification(num: String, yesOrNo: Boolean) {
+            context.createChannel(num, "SMS Notification", yesOrNo)
         }
 
         init {

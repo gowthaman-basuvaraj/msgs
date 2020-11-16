@@ -58,6 +58,12 @@
                 <action android:name="android.provider.Telephony.SMS_DELIVER" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name=".receivers.OtpCopy"
+            android:enabled="true"
+            android:exported="true">
+        </receiver>
+
 
         <!-- BroadcastReceiver that listens for incoming MMS messages -->
         <receiver

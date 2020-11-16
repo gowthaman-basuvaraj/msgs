@@ -4,21 +4,39 @@ import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
+import android.content.*
+import android.content.Context.NOTIFICATION_SERVICE
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.telephony.SmsMessage
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.webianks.hatkemessenger.R
 import com.webianks.hatkemessenger.activities.SmsDetailedView
 import com.webianks.hatkemessenger.constants.Constants
 import com.webianks.hatkemessenger.services.SaveSmsService
 import com.webianks.hatkemessenger.utils.PersonLookup
+import com.webianks.hatkemessenger.utils.createChannel
+import com.webianks.hatkemessenger.utils.getChannel
 import java.util.*
+
+class OtpCopy : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+        val action = intent?.action
+        val button = intent?.getStringExtra("BUTTON")
+        val otp = intent?.getStringExtra("OTP")
+
+        if (button == "COPY") {
+            val cm = context?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
+            cm?.clearPrimaryClip()
+            cm?.setPrimaryClip(ClipData.newPlainText("OTP", otp))
+        }
+    }
+
+}
+
 
 /**
  * Created by R Ankit on 24-12-2016.
@@ -51,20 +69,35 @@ class SmsReceiver : BroadcastReceiver() {
 
 
             val lookupPerson = PersonLookup(context).lookupPerson(senderNoOriginal)
-            val cn = lookupPerson?.name ?: lookupPerson?.normPhone ?: senderNoOriginal
             val senderNo = lookupPerson?.normPhone ?: senderNoOriginal
-            val existingNC = getChannel(senderNo, context)
-            if (existingNC != null) {
-                if (existingNC.importance != NotificationManager.IMPORTANCE_NONE) {
-                    issueNotification(context, senderNo, message, cn)
-                } else {
-                    //do not issue
-                }
+
+
+            val regex4 = Regex("\\d{4}")
+            val regex6 = Regex("\\d{6}")
+            val containsOTP = message.contains(regex4) || message.contains(Regex("\\d{6}"))
+            val isOTP = listOf("otp", "password").any { message.toLowerCase(Locale.ROOT).contains(it) }
+
+            val otp4 = regex4.find(message)
+            val otp6 = regex6.find(message)
+            if (isOTP && containsOTP && (otp4 != null || otp6 != null)) {
+
+                val otp = otp6 ?: otp4
+                val otpNum = otp!!.groupValues.first()
+                //issue OTP notification
+
+                val otpChanId = "OTP from $senderNo"
+                val otpChannel = context.getChannel(otpChanId)
+                        ?: context.createChannel(otpChanId, "OTP Notifications", true, NotificationManager.IMPORTANCE_HIGH)
+
+
+                showOTP(senderNo, otpNum, context, otpChanId)
             } else {
-                //create a channal but set it to no notify...
-                createChannel(cn, "SMS Notifications", context)
-                //we will not notify by default :P
-                //issueNotification(context, senderNo, message, cn)
+                val existingNC = context.getChannel(senderNo)
+                        ?: context.createChannel(senderNo, "SMS Notifications")
+
+                if (existingNC != null && existingNC.importance != NotificationManager.IMPORTANCE_NONE) {
+                    issueNotification(context, senderNo, message, senderNo)
+                }
             }
             saveSmsInInbox(context,
                     senderNo,
@@ -75,19 +108,52 @@ class SmsReceiver : BroadcastReceiver() {
         // End of loop
     } // bundle null
 
-    private fun showOTP(from: String, otp: String, context: Context){
-        val notificationBuilder =
-                NotificationCompat.Builder(context, "OTP-$from")
-                        .setSmallIcon(R.drawable.ic_notifications_black_24dp)
-                        .setContentTitle("OTP from $from")
-                        .setContentText(otp)
-                        .setPriority(NotificationCompat.PRIORITY_HIGH)
-                        .setCategory(NotificationCompat.CATEGORY_ALARM)
-                        .addAction(R.drawable.ic_sync_black_24dp, "Copy", null)
+    private fun showOTP(from: String, otp: String, context: Context, otpChannel: String) {
+        val s = "OTP from $from"
+        val builder = NotificationCompat.Builder(context, otpChannel)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(s)
+                .setContentText(otp)
+                .setAutoCancel(true)
+                .setAllowSystemGeneratedContextualActions(false)
+                .setVibrate(listOf(0L).toLongArray())
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
 
-         notificationBuilder.build()
+
+        builder.addAction(
+                R.drawable.ic_baseline_content_copy_24,
+                "Copy",
+                PendingIntent.getBroadcast(
+                        context,
+                        0,
+                        Intent(context, OtpCopy::class.java).apply {
+                            action = "COPY"
+                            putExtra("BUTTON", "COPY")
+                            putExtra("OTP", otp)
+                        },
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                )
+        )
 
 
+
+        builder.addAction(
+                R.drawable.ic_baseline_close_24,
+                "Cancel",
+                PendingIntent.getBroadcast(
+                        context,
+                        1,
+                        Intent(context, OtpCopy::class.java).apply {
+                            action = "CANCEL"
+                            putExtra("BUTTON", "CANCEL")
+                        },
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                )
+        )
+
+        val notificationManager = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(999, builder.build())
     }
 
 
@@ -111,7 +177,7 @@ class SmsReceiver : BroadcastReceiver() {
         )
 
         val icon = BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher)
-        val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val mNotifyMgr = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
 
         val mBuilder = NotificationCompat.Builder(context, cn)
@@ -130,34 +196,6 @@ class SmsReceiver : BroadcastReceiver() {
 
     }
 
-    private fun createChannel(senderNo: String, message: String, context: Context) {
-        val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(senderNo, senderNo, NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = message
-                importance = getImportanceLevel(senderNo)
-            }
-            mNotifyMgr.createNotificationChannel(channel)
-        }
-    }
-
-    @SuppressLint("InlinedApi")
-    private fun getImportanceLevel(senderNo: String): Int {
-        //by default we will not notify for anything
-        //however we will notify based on preference
-        return NotificationManager.IMPORTANCE_NONE
-    }
-
-    private fun getChannel(senderNo: String, context: Context): NotificationChannel? {
-        val mNotifyMgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mNotifyMgr.getNotificationChannel(senderNo)
-        } else {
-            null
-        }
-    }
 
     private fun getIncomingMessage(aObject: Any, bundle: Bundle): SmsMessage {
         val currentSMS: SmsMessage
