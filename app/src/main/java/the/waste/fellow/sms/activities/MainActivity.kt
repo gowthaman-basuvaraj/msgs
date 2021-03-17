@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.activities
+package the.waste.fellow.sms.activities
 
 import android.Manifest
 import android.app.SearchManager
@@ -23,13 +23,13 @@ import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.webianks.hatkemessenger.R
-import com.webianks.hatkemessenger.SMS
-import com.webianks.hatkemessenger.adapters.AllConversationAdapter
-import com.webianks.hatkemessenger.adapters.ItemCLickListener
-import com.webianks.hatkemessenger.constants.Constants
-import com.webianks.hatkemessenger.constants.SmsContract
-import com.webianks.hatkemessenger.utils.PersonLookup
+import the.waste.fellow.sms.R
+import the.waste.fellow.sms.SMS
+import the.waste.fellow.sms.adapters.AllConversationAdapter
+import the.waste.fellow.sms.adapters.ItemCLickListener
+import the.waste.fellow.sms.constants.Constants
+import the.waste.fellow.sms.constants.SmsContract
+import the.waste.fellow.sms.utils.PersonLookup
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import kotlin.collections.ArrayList

@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.activities
+package the.waste.fellow.sms.activities
 
 import android.app.Activity
 import android.app.PendingIntent
@@ -16,10 +16,10 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
-import com.webianks.hatkemessenger.R
-import com.webianks.hatkemessenger.constants.Constants
-import com.webianks.hatkemessenger.receivers.DeliverReceiver
-import com.webianks.hatkemessenger.receivers.SentReceiver
+import the.waste.fellow.sms.R
+import the.waste.fellow.sms.constants.Constants
+import the.waste.fellow.sms.receivers.DeliverReceiver
+import the.waste.fellow.sms.receivers.SentReceiver
 
 class NewSMSActivity : AppCompatActivity(), View.OnClickListener {
 

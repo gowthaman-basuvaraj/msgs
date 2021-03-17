@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.activities
+package the.waste.fellow.sms.activities
 
 import android.Manifest
 import android.app.PendingIntent
@@ -22,13 +22,13 @@ import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.webianks.hatkemessenger.R
-import com.webianks.hatkemessenger.adapters.SingleGroupAdapter
-import com.webianks.hatkemessenger.constants.Constants
-import com.webianks.hatkemessenger.constants.SmsContract
-import com.webianks.hatkemessenger.receivers.DeliverReceiver
-import com.webianks.hatkemessenger.receivers.SentReceiver
-import com.webianks.hatkemessenger.services.UpdateSMSService
+import the.waste.fellow.sms.R
+import the.waste.fellow.sms.adapters.SingleGroupAdapter
+import the.waste.fellow.sms.constants.Constants
+import the.waste.fellow.sms.constants.SmsContract
+import the.waste.fellow.sms.receivers.DeliverReceiver
+import the.waste.fellow.sms.receivers.SentReceiver
+import the.waste.fellow.sms.services.UpdateSMSService
 
 class SmsDetailedView : AppCompatActivity(),
         LoaderManager.LoaderCallbacks<Cursor?>,

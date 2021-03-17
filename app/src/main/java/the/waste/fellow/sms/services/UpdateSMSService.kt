@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.services
+package the.waste.fellow.sms.services
 
 import android.app.IntentService
 import android.content.ContentValues

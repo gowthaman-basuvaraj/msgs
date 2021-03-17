@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.constants
+package the.waste.fellow.sms.constants
 
 
 object Constants {

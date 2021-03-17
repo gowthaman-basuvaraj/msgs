@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.webianks.hatkemessenger">
+    package="the.waste.fellow.sms">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
@@ -18,7 +18,7 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name=".activities.MainActivity">
+        <activity android:name="the.waste.fellow.sms.activities.MainActivity">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,7 +31,7 @@
 
         </activity>
 
-        <activity android:name=".activities.NewSMSActivity"
+        <activity android:name="the.waste.fellow.sms.activities.NewSMSActivity"
             android:label="@string/label_new_sms"
             >
             <intent-filter>
@@ -49,7 +49,7 @@
         </activity>
 
         <receiver
-            android:name=".receivers.SmsReceiver"
+            android:name="the.waste.fellow.sms.receivers.SmsReceiver"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">
@@ -59,7 +59,7 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".receivers.OtpCopy"
+            android:name="the.waste.fellow.sms.receivers.OtpCopy"
             android:enabled="true"
             android:exported="true">
         </receiver>
@@ -67,7 +67,7 @@
 
         <!-- BroadcastReceiver that listens for incoming MMS messages -->
         <receiver
-            android:name=".receivers.MmsReceiver"
+            android:name="the.waste.fellow.sms.receivers.MmsReceiver"
             android:permission="android.permission.BROADCAST_WAP_PUSH">
             <intent-filter>
                 <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
@@ -78,7 +78,7 @@
 
         <!-- Service that delivers messages from the phone "quick response" -->
         <service
-            android:name=".services.HeadlessSmsSendService"
+            android:name="the.waste.fellow.sms.services.HeadlessSmsSendService"
             android:exported="true"
             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE">
             <intent-filter>
@@ -93,16 +93,16 @@
             </intent-filter>
         </service>
         <service
-            android:name=".services.SaveSmsService"
+            android:name="the.waste.fellow.sms.services.SaveSmsService"
             android:exported="false" />
 
-        <activity android:name=".activities.SmsDetailedView" />
+        <activity android:name="the.waste.fellow.sms.activities.SmsDetailedView" />
 
         <activity
-            android:name=".activities.SettingsActivity"
+            android:name="the.waste.fellow.sms.activities.SettingsActivity"
             android:label="@string/title_activity_settings" />
 
-        <service android:name=".services.UpdateSMSService"/>
+        <service android:name="the.waste.fellow.sms.services.UpdateSMSService"/>
 
     </application>
 

@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.utils
+package the.waste.fellow.sms.utils
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import com.webianks.hatkemessenger.constants.Constants
+import the.waste.fellow.sms.constants.Constants
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.security.MessageDigest

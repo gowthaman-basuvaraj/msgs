@@ -1,11 +1,11 @@
-package com.webianks.hatkemessenger.receivers
+package the.waste.fellow.sms.receivers
 
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import com.webianks.hatkemessenger.R
+import the.waste.fellow.sms.R
 
 /**
  * Created by R Ankit on 30-12-2016.

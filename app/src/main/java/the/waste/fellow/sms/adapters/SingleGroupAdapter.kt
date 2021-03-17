@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.adapters
+package the.waste.fellow.sms.adapters
 
 import android.content.Context
 import android.database.Cursor
@@ -9,10 +9,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
-import com.webianks.hatkemessenger.R
-import com.webianks.hatkemessenger.adapters.SingleGroupAdapter.MyViewHolder
-import com.webianks.hatkemessenger.utils.ColorGeneratorModified
-import com.webianks.hatkemessenger.utils.Helpers
+import the.waste.fellow.sms.R
+import the.waste.fellow.sms.adapters.SingleGroupAdapter.MyViewHolder
+import the.waste.fellow.sms.utils.ColorGeneratorModified
+import the.waste.fellow.sms.utils.Helpers
 
 /**
  * Created by R Ankit on 25-12-2016.

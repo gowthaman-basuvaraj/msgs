@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.utils
+package the.waste.fellow.sms.utils
 
 import java.util.*
 

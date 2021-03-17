@@ -1,7 +1,6 @@
-package com.webianks.hatkemessenger.receivers
+package the.waste.fellow.sms.receivers
 
 import android.annotation.SuppressLint
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.*
@@ -11,15 +10,14 @@ import android.os.Build
 import android.os.Bundle
 import android.telephony.SmsMessage
 import android.util.Log
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import com.webianks.hatkemessenger.R
-import com.webianks.hatkemessenger.activities.SmsDetailedView
-import com.webianks.hatkemessenger.constants.Constants
-import com.webianks.hatkemessenger.services.SaveSmsService
-import com.webianks.hatkemessenger.utils.PersonLookup
-import com.webianks.hatkemessenger.utils.createChannel
-import com.webianks.hatkemessenger.utils.getChannel
+import the.waste.fellow.sms.R
+import the.waste.fellow.sms.activities.SmsDetailedView
+import the.waste.fellow.sms.constants.Constants
+import the.waste.fellow.sms.services.SaveSmsService
+import the.waste.fellow.sms.utils.PersonLookup
+import the.waste.fellow.sms.utils.createChannel
+import the.waste.fellow.sms.utils.getChannel
 import java.util.*
 
 class OtpCopy : BroadcastReceiver() {

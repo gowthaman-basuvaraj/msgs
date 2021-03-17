@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.receivers
+package the.waste.fellow.sms.receivers
 
 import android.content.BroadcastReceiver
 import android.content.Context

@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.adapters
+package the.waste.fellow.sms.adapters
 
 import android.content.Context
 import android.content.Intent
@@ -19,13 +19,13 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.amulyakhare.textdrawable.TextDrawable
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.webianks.hatkemessenger.R
-import com.webianks.hatkemessenger.SMS
-import com.webianks.hatkemessenger.adapters.AllConversationAdapter.MyHolder
-import com.webianks.hatkemessenger.utils.ColorGeneratorModified
-import com.webianks.hatkemessenger.utils.Helpers
-import com.webianks.hatkemessenger.utils.PersonLookup
-import com.webianks.hatkemessenger.utils.createChannel
+import the.waste.fellow.sms.R
+import the.waste.fellow.sms.SMS
+import the.waste.fellow.sms.adapters.AllConversationAdapter.MyHolder
+import the.waste.fellow.sms.utils.ColorGeneratorModified
+import the.waste.fellow.sms.utils.Helpers
+import the.waste.fellow.sms.utils.PersonLookup
+import the.waste.fellow.sms.utils.createChannel
 
 
 /**

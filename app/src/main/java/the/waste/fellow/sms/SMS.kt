@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger
+package the.waste.fellow.sms
 
 /**
  * Created by R Ankit on 24-12-2016.

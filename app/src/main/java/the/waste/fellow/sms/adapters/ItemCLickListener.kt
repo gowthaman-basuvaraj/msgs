@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.adapters
+package the.waste.fellow.sms.adapters
 
 /**
  * Created by R Ankit on 25-12-2016.

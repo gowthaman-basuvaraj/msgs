@@ -1,9 +1,9 @@
-package com.webianks.hatkemessenger.services
+package the.waste.fellow.sms.services
 
 import android.app.IntentService
 import android.content.ContentValues
 import android.content.Intent
-import com.webianks.hatkemessenger.constants.SmsContract
+import the.waste.fellow.sms.constants.SmsContract
 
 /**
  * Created by R Ankit on 26-12-2016.

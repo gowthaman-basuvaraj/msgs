@@ -1,4 +1,4 @@
-package com.webianks.hatkemessenger.utils
+package the.waste.fellow.sms.utils
 
 import android.content.Context
 import android.database.Cursor
