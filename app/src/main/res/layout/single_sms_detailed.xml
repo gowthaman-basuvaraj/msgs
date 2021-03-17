@@ -32,6 +32,7 @@
         android:textSize="@dimen/detailed_text_size"
         android:layout_toRightOf="@id/smsImage"
         android:padding="@dimen/activity_horizontal_margin"
+        android:autoLink="web"
         android:text="@string/content_small"
         android:background="@drawable/rounded_background"
         android:textColor="@color/colorPrimaryText"
