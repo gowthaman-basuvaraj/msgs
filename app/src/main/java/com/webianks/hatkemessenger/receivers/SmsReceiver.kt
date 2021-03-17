@@ -74,14 +74,16 @@ class SmsReceiver : BroadcastReceiver() {
 
             val regex4 = Regex("\\d{4}")
             val regex6 = Regex("\\d{6}")
-            val containsOTP = message.contains(regex4) || message.contains(Regex("\\d{6}"))
+            val regex8 = Regex("\\d{6}")
+            val containsOTP = message.contains(regex4) || message.contains(Regex("\\d{6}"))|| message.contains(Regex("\\d{8}"))
             val isOTP = listOf("otp", "password").any { message.toLowerCase(Locale.ROOT).contains(it) }
 
             val otp4 = regex4.find(message)
             val otp6 = regex6.find(message)
-            if (isOTP && containsOTP && (otp4 != null || otp6 != null)) {
+            val otp8 = regex8.find(message)
+            if (isOTP && containsOTP && (otp4 != null || otp6 != null || otp8 != null)) {
 
-                val otp = otp6 ?: otp4
+                val otp = otp8 ?: otp6 ?: otp4
                 val otpNum = otp!!.groupValues.first()
                 //issue OTP notification
 
