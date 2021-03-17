@@ -1,6 +1,7 @@
 package the.waste.fellow.sms.utils
 
 import java.util.*
+import kotlin.math.abs
 
 /**
  * @author amulya
@@ -47,15 +48,8 @@ class ColorGeneratorModified private constructor(private val mColors: List<Int>)
         }
     }
 
-    private val mRandom: Random
-    val randomColor: Int
-        get() = mColors[mRandom.nextInt(mColors.size)]
-
     fun getColor(key: Any): Int {
-        return mColors[Math.abs(key.hashCode()) % mColors.size]
+        return mColors[abs(key.hashCode()) % mColors.size]
     }
 
-    init {
-        mRandom = Random(System.currentTimeMillis())
-    }
 }
