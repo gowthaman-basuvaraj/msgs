@@ -141,10 +141,6 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
 
         }
 
-        private fun setNotification(num: String, yesOrNo: Boolean) {
-            context.createChannel(num, "SMS Notification", yesOrNo)
-        }
-
         init {
             mainLayout.setOnClickListener(this)
             mainLayout.setOnLongClickListener(this)

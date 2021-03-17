@@ -88,26 +88,22 @@ class MainActivity : AppCompatActivity(),
             }
             b
         } else {
-            if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-                if (Telephony.Sms.getDefaultSmsPackage(this) != packageName) {
-                    val builder = MaterialAlertDialogBuilder(this@MainActivity)
-                    builder.setMessage("This app is not set as your default messaging app. Do you want to set it as default?")
-                            .setCancelable(false)
-                            .setNegativeButton("No") { dialog: DialogInterface, _: Int ->
-                                dialog.dismiss()
-                                checkPermissions()
-                            }
-                            .setPositiveButton("Yes") { _, _ ->
-                                val intent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT)
-                                intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
-                                startActivity(intent)
-                                checkPermissions()
-                            }
-                    builder.show()
-                    false
-                } else {
-                    true
-                }
+            if (Telephony.Sms.getDefaultSmsPackage(this) != packageName) {
+                val builder = MaterialAlertDialogBuilder(this@MainActivity)
+                builder.setMessage("This app is not set as your default messaging app. Do you want to set it as default?")
+                        .setCancelable(false)
+                        .setNegativeButton("No") { dialog: DialogInterface, _: Int ->
+                            dialog.dismiss()
+                            checkPermissions()
+                        }
+                        .setPositiveButton("Yes") { _, _ ->
+                            val intent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT)
+                            intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
+                            startActivity(intent)
+                            checkPermissions()
+                        }
+                builder.show()
+                false
             } else {
                 true
             }
@@ -162,7 +158,7 @@ class MainActivity : AppCompatActivity(),
         when (requestCode) {
             Constants.MY_PERMISSIONS_REQUEST_READ_SMS -> {
                 run {
-                    if (grantResults.size > 0
+                    if (grantResults.isNotEmpty()
                             && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                         if (ContextCompat.checkSelfPermission(this,
                                         Manifest.permission.READ_CONTACTS)
@@ -181,7 +177,7 @@ class MainActivity : AppCompatActivity(),
                     }
                 }
                 run {
-                    if (grantResults.size > 0
+                    if (grantResults.isNotEmpty()
                             && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                         LoaderManager.getInstance(this@MainActivity).initLoader(Constants.ALL_SMS_LOADER, null, this)
                     } else {
