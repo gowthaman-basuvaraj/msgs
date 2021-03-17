@@ -34,9 +34,9 @@ class PersonLookup(private val context: Context) {
 
         val input = address.toUpperCase(Locale.ROOT)
         val senderNo = if (nameCheck.matches(input) || numberCheck.matches(input)) {
-            address.split("-").last()
+            address.split("-").last().toUpperCase(Locale.ROOT)
         } else {
-            address
+            address.toUpperCase(Locale.ROOT)
         }
         Log.w("LOOKUP", "$input -> $senderNo")
 
