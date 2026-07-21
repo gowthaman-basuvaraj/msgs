@@ -13,7 +13,7 @@
 
     <application
         android:name="the.waste.fellow.sms.MessagesApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
