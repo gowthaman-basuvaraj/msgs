@@ -39,4 +39,46 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="Server sync">
+
+        <SwitchPreferenceCompat
+            app:key="sync_enabled"
+            app:defaultValue="false"
+            app:title="Forward messages to server"
+            app:summary="POST received messages to the sms_web_api server so you can read them on the web" />
+
+        <EditTextPreference
+            app:key="sync_base_url"
+            app:dependency="sync_enabled"
+            app:title="Server URL"
+            app:summary="e.g. https://your-host:3000"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="sync_user_name"
+            app:dependency="sync_enabled"
+            app:title="Account username"
+            app:summary="The server-side user the messages are stored under"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="sync_sim"
+            app:dependency="sync_enabled"
+            app:title="SIM label (optional)"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="sync_token"
+            app:dependency="sync_enabled"
+            app:title="Bearer token"
+            app:summary="Paste a Keycloak access token (expires ~hourly; re-paste when uploads start failing)" />
+
+        <Preference
+            app:key="sync_now"
+            app:dependency="sync_enabled"
+            app:title="Sync now"
+            app:summary="Flush any queued messages to the server immediately" />
+
+    </PreferenceCategory>
+
 </androidx.preference.PreferenceScreen>
