@@ -10,6 +10,7 @@ object Constants {
     const val FROM_SMS_RECIEVER = "from_sms_receiver"
     const val MY_PERMISSIONS_REQUEST_READ_SMS = 1
     const val MY_PERMISSIONS_REQUEST_READ_CONTACTS = 2
+    const val MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS = 3
     const val SMS_ID = "_id"
     const val COLOR = "color"
     const val READ = "read"

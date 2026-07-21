@@ -1,52 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/small_layout_main"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/main_background"
-    android:clickable="true"
-    android:orientation="vertical">
+    android:layout_marginStart="12dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginTop="6dp"
+    android:layout_marginBottom="0dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="?attr/colorSurfaceVariant"
+    app:strokeWidth="0dp">
 
-    <ImageView
-        android:id="@+id/smsImage"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
-        android:layout_margin="@dimen/margin_imageview"
-        android:src="@drawable/ic_account_circle_black_36dp" />
-
-    <TextView
-        android:id="@+id/smsSender"
+    <RelativeLayout
+        android:id="@+id/small_layout_main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginRight="@dimen/margin_imageview"
-        android:layout_marginTop="@dimen/margin_sender"
-        android:layout_toRightOf="@id/smsImage"
-        android:text="@string/title"
-        android:textAllCaps="true"
-        android:textColor="@color/colorPrimaryText" />
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"
+        android:paddingBottom="10dp"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/smsContent"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/smsSender"
-        android:layout_marginRight="@dimen/margin_imageview"
-        android:layout_toRightOf="@id/smsImage"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="@string/content_small"
-        android:textSize="@dimen/previewMessageSize" />
+        <ImageView
+            android:id="@+id/smsImage"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_margin="12dp"
+            android:src="@drawable/ic_account_circle_black_36dp" />
 
-    <TextView
-        android:id="@+id/time"
-        android:visibility="visible"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/smsContent"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="10dp"
-        android:textColor="@color/colorPrimaryThird"
-        android:layout_toRightOf="@id/smsImage"
-        />
+        <TextView
+            android:id="@+id/smsSender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="14dp"
+            android:layout_toEndOf="@id/smsImage"
+            android:text="@string/title"
+            android:textAllCaps="true"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSurface" />
 
-</RelativeLayout>
+        <TextView
+            android:id="@+id/smsContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/smsSender"
+            android:layout_marginEnd="16dp"
+            android:layout_toEndOf="@id/smsImage"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/content_small"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="@dimen/previewMessageSize" />
+
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/smsContent"
+            android:layout_marginTop="4dp"
+            android:layout_toEndOf="@id/smsImage"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="?attr/textAppearanceLabelSmall" />
+
+    </RelativeLayout>
+
+</com.google.android.material.card.MaterialCardView>

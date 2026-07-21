@@ -10,11 +10,11 @@ import kotlin.collections.LinkedHashMap
 
 class PersonLookup(private val context: Context) {
 
+    // Lazy: PersonLookup is sometimes constructed as an Activity field (before the base
+    // context is attached), so touching applicationContext eagerly would NPE.
+    private val settings by lazy { AppSettings(context) }
+
     companion object {
-        private val nameCheck = Regex("[A-Z]{2}\\-[A-Z]{6}")
-        private val numberCheck = Regex("[A-Z]{2}\\-[0-9]{6}")
-
-
         const val MAX_SIZE = 500
         val cache: MutableMap<String, LocalContact> = object : LinkedHashMap<String, LocalContact>() {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, LocalContact>?): Boolean {
@@ -32,13 +32,8 @@ class PersonLookup(private val context: Context) {
 
 
 
-        val input = address.toUpperCase(Locale.ROOT)
-        val senderNo = if (nameCheck.matches(input) || numberCheck.matches(input)) {
-            address.split("-").last().toUpperCase(Locale.ROOT)
-        } else {
-            address.toUpperCase(Locale.ROOT)
-        }
-        Log.w("LOOKUP", "$input -> $senderNo")
+        val senderNo = settings.normalizeSender(address)
+        Log.w("LOOKUP", "$address -> $senderNo")
 
         val defLocalContact = LocalContact(name = senderNo, phone = address, normPhone = senderNo)
 
