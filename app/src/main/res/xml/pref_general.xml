@@ -55,29 +55,53 @@
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:key="sync_user_name"
-            app:dependency="sync_enabled"
-            app:title="Account username"
-            app:summary="The server-side user the messages are stored under"
-            app:useSimpleSummaryProvider="true" />
-
-        <EditTextPreference
             app:key="sync_sim"
             app:dependency="sync_enabled"
             app:title="SIM label (optional)"
             app:useSimpleSummaryProvider="true" />
-
-        <EditTextPreference
-            app:key="sync_token"
-            app:dependency="sync_enabled"
-            app:title="Bearer token"
-            app:summary="Paste a Keycloak access token (expires ~hourly; re-paste when uploads start failing)" />
 
         <Preference
             app:key="sync_now"
             app:dependency="sync_enabled"
             app:title="Sync now"
             app:summary="Flush any queued messages to the server immediately" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Sign in (Keycloak)">
+
+        <EditTextPreference
+            app:key="sync_issuer"
+            app:dependency="sync_enabled"
+            app:defaultValue="https://auth.readymixerp.com/realms/rmc-dev"
+            app:title="Keycloak issuer URL"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="sync_client_id"
+            app:dependency="sync_enabled"
+            app:defaultValue="rmc"
+            app:title="Client id"
+            app:useSimpleSummaryProvider="true" />
+
+        <Preference
+            app:key="sync_sign_in"
+            app:dependency="sync_enabled"
+            app:title="Sign in"
+            app:summary="Log in with Keycloak; the app then refreshes tokens automatically" />
+
+        <EditTextPreference
+            app:key="sync_user_name"
+            app:dependency="sync_enabled"
+            app:title="Account username (optional override)"
+            app:summary="Defaults to your signed-in username; set only to store under a different account"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="sync_token"
+            app:dependency="sync_enabled"
+            app:title="Manual bearer token (fallback)"
+            app:summary="Only used when not signed in. Paste a Keycloak access token (expires ~hourly)" />
 
     </PreferenceCategory>
 

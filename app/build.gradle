@@ -15,6 +15,8 @@ android {
         versionName "3.0"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // Custom-scheme redirect used by AppAuth for the Keycloak OAuth callback.
+        manifestPlaceholders = [appAuthRedirectScheme: 'the.waste.fellow.sms']
     }
 
     buildTypes {
@@ -46,6 +48,7 @@ dependencies {
     implementation libs.androidx.recyclerview
     implementation libs.androidx.constraintlayout
     implementation libs.androidx.work.runtime.ktx
+    implementation libs.appauth
 
     testImplementation libs.junit
 }

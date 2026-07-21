@@ -56,9 +56,25 @@ class AppSettings(context: Context) {
     val syncSim: String
         get() = prefs.getString(KEY_SYNC_SIM, "")?.trim().orEmpty()
 
-    /** True only when sync is on and the minimum connection details are present. */
+    /** Keycloak issuer URL, e.g. https://auth.example.com/realms/my-realm. */
+    val syncIssuer: String
+        get() = prefs.getString(KEY_SYNC_ISSUER, DEFAULT_ISSUER)?.trim()?.trimEnd('/').orEmpty()
+
+    /** Public OAuth client id registered in Keycloak for this app. */
+    val syncClientId: String
+        get() = prefs.getString(KEY_SYNC_CLIENT_ID, DEFAULT_CLIENT_ID)?.trim().orEmpty()
+
+    /** True when issuer + client id are set, so OIDC login can be attempted. */
+    val oidcConfigured: Boolean
+        get() = syncIssuer.isNotEmpty() && syncClientId.isNotEmpty()
+
+    /**
+     * True when sync is on and reachable. The account username may be supplied explicitly
+     * or derived from the OIDC token, so it is resolved in the worker rather than required
+     * here.
+     */
     val syncConfigured: Boolean
-        get() = syncEnabled && syncBaseUrl.isNotEmpty() && syncUserName.isNotEmpty()
+        get() = syncEnabled && syncBaseUrl.isNotEmpty()
 
     companion object {
         const val KEY_SUFFIX_LETTERS = "suffix_letters"
@@ -69,6 +85,10 @@ class AppSettings(context: Context) {
         const val KEY_SYNC_USER_NAME = "sync_user_name"
         const val KEY_SYNC_TOKEN = "sync_token"
         const val KEY_SYNC_SIM = "sync_sim"
+        const val KEY_SYNC_ISSUER = "sync_issuer"
+        const val KEY_SYNC_CLIENT_ID = "sync_client_id"
         private const val DEFAULT_SUFFIX_STRING = "GSPT"
+        private const val DEFAULT_ISSUER = "https://auth.readymixerp.com/realms/rmc-dev"
+        private const val DEFAULT_CLIENT_ID = "rmc"
     }
 }

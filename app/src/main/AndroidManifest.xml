@@ -115,6 +115,11 @@
             android:exported="false"
             android:label="Keyword rules" />
 
+        <activity
+            android:name="the.waste.fellow.sms.activities.LoginActivity"
+            android:exported="false"
+            android:theme="@style/TranslucentAppTheme" />
+
         <service android:name="the.waste.fellow.sms.services.UpdateSMSService"/>
 
     </application>

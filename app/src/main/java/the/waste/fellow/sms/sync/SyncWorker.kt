@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import the.waste.fellow.sms.auth.AuthManager
 import the.waste.fellow.sms.utils.AppSettings
 
 /**
@@ -27,14 +28,25 @@ class SyncWorker(
         val entries = store.all()
         if (entries.isEmpty()) return@withContext Result.success()
 
+        // Prefer a fresh OIDC access token (auto-refreshed); fall back to a pasted token.
+        val authManager = AuthManager(applicationContext)
+        val token = authManager.freshAccessToken() ?: settings.syncToken
+
+        // Account username: explicit setting, else the signed-in user's preferred_username.
+        val userName = settings.syncUserName.ifBlank { authManager.userName.orEmpty() }
+        if (userName.isBlank()) {
+            Log.w(TAG, "No username (set one or sign in) — keeping ${entries.size} queued")
+            return@withContext Result.retry()
+        }
+
         val done = mutableListOf<Long>()
         var retryNeeded = false
 
         for (entry in entries) {
             val outcome = SyncApi.postSendMessage(
                 baseUrl = settings.syncBaseUrl,
-                token = settings.syncToken,
-                userName = settings.syncUserName,
+                token = token,
+                userName = userName,
                 sender = entry.sender,
                 text = entry.text,
                 sim = settings.syncSim,

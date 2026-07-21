@@ -9,6 +9,7 @@ recyclerview = "1.3.2"
 constraintlayout = "2.1.4"
 datastore = "1.1.1"
 work = "2.9.1"
+appauth = "0.11.1"
 junit = "4.13.2"
 robolectric = "4.12.2"
 
@@ -21,6 +22,7 @@ androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work" }
+appauth = { module = "net.openid:appauth", version.ref = "appauth" }
 junit = { module = "junit:junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
