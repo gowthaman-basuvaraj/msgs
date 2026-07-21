@@ -1,2 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto"></androidx.preference.PreferenceScreen>
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="Sender grouping">
+
+        <EditTextPreference
+            app:key="suffix_letters"
+            app:defaultValue="GSPT"
+            app:title="Category suffix letters"
+            app:summary="Trailing letters treated as sender category suffixes, e.g. G (govt) S (service) P (promo) T (txn)"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            app:key="strip_glued_suffix"
+            app:defaultValue="false"
+            app:title="Strip glued suffix"
+            app:summary="Also strip a trailing category letter when there is no hyphen (best-effort; may over-strip names ending in those letters)" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Notifications">
+
+        <SwitchPreferenceCompat
+            app:key="default_notify"
+            app:defaultValue="false"
+            app:title="Notify by default"
+            app:summary="When off, all senders are muted unless whitelisted or a keyword rule forces a notification" />
+
+        <Preference
+            app:key="notification_rules"
+            app:title="Keyword rules"
+            app:summary="Per-sender rules to force-notify or mute messages on keyword match">
+            <intent
+                android:targetPackage="the.waste.fellow.sms"
+                android:targetClass="the.waste.fellow.sms.activities.RulesActivity" />
+        </Preference>
+
+    </PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>

@@ -1,14 +1,12 @@
 package the.waste.fellow.sms.activities
 
 import android.app.Activity
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.database.Cursor
 import android.os.Bundle
 import android.provider.ContactsContract
-import android.telephony.SmsManager
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
@@ -16,10 +14,12 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import the.waste.fellow.sms.R
 import the.waste.fellow.sms.constants.Constants
 import the.waste.fellow.sms.receivers.DeliverReceiver
 import the.waste.fellow.sms.receivers.SentReceiver
+import the.waste.fellow.sms.utils.SmsSender
 
 class NewSMSActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -80,14 +80,21 @@ class NewSMSActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun sendSMSNow() {
-        val SENT = "SMS_SENT"
-        val DELIVERED = "SMS_DELIVERED"
-        val sentPI = PendingIntent.getBroadcast(this, 0, Intent(SENT), 0)
-        val deliveredPI = PendingIntent.getBroadcast(this, 0, Intent(DELIVERED), 0)
-        registerReceiver(sendBroadcastReceiver, IntentFilter(SENT))
-        registerReceiver(deliveryBroadcastReceiver, IntentFilter(DELIVERED))
-        val sms = SmsManager.getDefault()
-        sms.sendTextMessage(phoneNo, null, message, sentPI, deliveredPI)
+        ContextCompat.registerReceiver(
+            this, sendBroadcastReceiver, IntentFilter(SmsSender.ACTION_SENT),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        ContextCompat.registerReceiver(
+            this, deliveryBroadcastReceiver, IntentFilter(SmsSender.ACTION_DELIVERED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        try {
+            SmsSender.send(this, phoneNo!!, message!!)
+            txtMessage?.text?.clear()
+            finish()
+        } catch (e: Exception) {
+            txtMessage?.error = getString(R.string.cant_send)
+        }
     }
 
     fun pickContact(v: View?) {

@@ -17,7 +17,6 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
-import com.amulyakhare.textdrawable.TextDrawable
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import the.waste.fellow.sms.R
 import the.waste.fellow.sms.SMS
@@ -25,6 +24,7 @@ import the.waste.fellow.sms.adapters.AllConversationAdapter.MyHolder
 import the.waste.fellow.sms.utils.ColorGeneratorModified
 import the.waste.fellow.sms.utils.Helpers
 import the.waste.fellow.sms.utils.PersonLookup
+import the.waste.fellow.sms.utils.TextDrawable
 import the.waste.fellow.sms.utils.createChannel
 
 

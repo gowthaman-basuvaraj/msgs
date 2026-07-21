@@ -24,7 +24,9 @@
         android:layout_height="match_parent"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:background="@color/white"
+        android:background="?attr/colorSurface"
+        android:clipToPadding="false"
+        android:paddingBottom="88dp"
         android:scrollbars="vertical" />
 
     <ProgressBar

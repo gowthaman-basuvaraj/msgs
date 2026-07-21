@@ -29,8 +29,8 @@ import the.waste.fellow.sms.adapters.AllConversationAdapter
 import the.waste.fellow.sms.adapters.ItemCLickListener
 import the.waste.fellow.sms.constants.Constants
 import the.waste.fellow.sms.constants.SmsContract
+import the.waste.fellow.sms.databinding.ActivityMainBinding
 import the.waste.fellow.sms.utils.PersonLookup
-import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity(),
         LoaderManager.LoaderCallbacks<Cursor?>,
         SearchView.OnQueryTextListener {
 
+    private lateinit var binding: ActivityMainBinding
     private var allConversationAdapter: AllConversationAdapter? = null
     private var mCurFilter: String? = null
     private var data: MutableList<SMS> = arrayListOf()
@@ -47,16 +48,30 @@ class MainActivity : AppCompatActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         init()
     }
 
     private fun init() {
 
         val linearLayoutManager = LinearLayoutManager(this)
-        recyclerview.layoutManager = linearLayoutManager
-        fab_new.setOnClickListener(this)
+        binding.recyclerview.layoutManager = linearLayoutManager
+        binding.fabNew.setOnClickListener(this)
+        requestNotificationPermission()
         if (checkDefaultSettings()) checkPermissions()
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this, arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                Constants.MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS
+            )
+        }
     }
 
     private fun checkPermissions() {
@@ -113,7 +128,7 @@ class MainActivity : AppCompatActivity(),
     private fun setRecyclerView(data: MutableList<SMS>) {
         allConversationAdapter = AllConversationAdapter(this, data)
         allConversationAdapter?.setItemClickListener(this)
-        recyclerview.adapter = allConversationAdapter
+        binding.recyclerview.adapter = allConversationAdapter
     }
 
     override fun onClick(view: View) {
@@ -133,7 +148,9 @@ class MainActivity : AppCompatActivity(),
                 if (new_sms) supportLoaderManager.restartLoader(Constants.ALL_SMS_LOADER, null, this@MainActivity)
             }
         }
-        this.registerReceiver(mReceiver, intentFilter)
+        ContextCompat.registerReceiver(
+            this, mReceiver, intentFilter, ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         supportLoaderManager.restartLoader(Constants.ALL_SMS_LOADER, null, this@MainActivity)
     }
 
@@ -217,7 +234,7 @@ class MainActivity : AppCompatActivity(),
             selectionArgs = arrayOf("%$mCurFilter%", "%$mCurFilter%")
         }
         return CursorLoader(this,
-                SmsContract.ALL_SMS_URI,
+                SmsContract.INBOX_URI,
                 null,
                 selection,
                 selectionArgs,
@@ -225,7 +242,7 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
-        progressBar!!.visibility = View.GONE
+        binding.progressBar.visibility = View.GONE
         if (cursor != null && cursor.count > 0) {
 
             //allConversationAdapter.swapCursor(cursor);

@@ -1,14 +1,12 @@
 package the.waste.fellow.sms.activities
 
 import android.Manifest
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.Bundle
-import android.telephony.SmsManager
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
@@ -17,6 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import the.waste.fellow.sms.utils.SmsSender
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
@@ -39,7 +38,7 @@ class SmsDetailedView : AppCompatActivity(),
     private var singleGroupAdapter: SingleGroupAdapter? = null
     private var recyclerView: RecyclerView? = null
     private var etMessage: EditText? = null
-    private var btSend: ImageView? = null
+    private var btSend: View? = null
     private var message: String? = null
     private var from_reciever = false
 
@@ -101,11 +100,11 @@ class SmsDetailedView : AppCompatActivity(),
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor?> {
         val selectionArgs = arrayOf(contact)
         return CursorLoader(this,
-                SmsContract.ALL_SMS_URI,
+                SmsContract.CONVERSATION_URI,
                 null,
                 SmsContract.SMS_SELECTION,
                 selectionArgs,
-                null)
+                SmsContract.SORT_ASC)
     }
 
     override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
@@ -164,15 +163,17 @@ class SmsDetailedView : AppCompatActivity(),
     private fun sendSMSNow() {
         val sendBroadcastReceiver: BroadcastReceiver = SentReceiver()
         val deliveryBroadcastReceiver: BroadcastReceiver = DeliverReceiver()
-        val SENT = "SMS_SENT"
-        val DELIVERED = "SMS_DELIVERED"
-        val sentPI = PendingIntent.getBroadcast(this, 0, Intent(SENT), 0)
-        val deliveredPI = PendingIntent.getBroadcast(this, 0, Intent(DELIVERED), 0)
-        registerReceiver(sendBroadcastReceiver, IntentFilter(SENT))
-        registerReceiver(deliveryBroadcastReceiver, IntentFilter(DELIVERED))
+        ContextCompat.registerReceiver(
+            this, sendBroadcastReceiver, IntentFilter(SmsSender.ACTION_SENT),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        ContextCompat.registerReceiver(
+            this, deliveryBroadcastReceiver, IntentFilter(SmsSender.ACTION_DELIVERED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
         try {
-            val sms = SmsManager.getDefault()
-            sms.sendTextMessage(contact, null, message, sentPI, deliveredPI)
+            SmsSender.send(this, contact!!, message!!)
+            etMessage?.text?.clear()
         } catch (e: Exception) {
             Toast.makeText(this, getString(R.string.cant_send), Toast.LENGTH_SHORT).show()
         }
