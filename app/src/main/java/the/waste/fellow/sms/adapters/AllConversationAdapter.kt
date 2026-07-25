@@ -26,6 +26,7 @@ import the.waste.fellow.sms.utils.Helpers
 import the.waste.fellow.sms.utils.PersonLookup
 import the.waste.fellow.sms.utils.TextDrawable
 import the.waste.fellow.sms.utils.createChannel
+import the.waste.fellow.sms.utils.getChannel
 
 
 /**
@@ -132,6 +133,13 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
 
         private fun muteDialog() {
             val senderNo = data[adapterPosition].normAddress!!
+
+            // The system channel-settings screen shows nothing (just bounces back) for a
+            // channel that doesn't exist yet — which is the case for senders whose messages
+            // predate the app, so no channel was ever created on receive. Create it first.
+            if (context.getChannel(senderNo) == null) {
+                context.createChannel(senderNo, "SMS Notifications")
+            }
 
             val intent: Intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                     .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
