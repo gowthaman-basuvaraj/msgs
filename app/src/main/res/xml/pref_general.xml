@@ -18,6 +18,11 @@
             app:title="Strip glued suffix"
             app:summary="Also strip a trailing category letter when there is no hyphen (best-effort; may over-strip names ending in those letters)" />
 
+        <Preference
+            app:key="normalize_senders"
+            app:title="Normalize stored sender IDs"
+            app:summary="Rewrite existing messages' sender to the grouped form (e.g. AX-INDPOST-S → INDPOST). Affects the phone's SMS database; can't be undone." />
+
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Notifications">

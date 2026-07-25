@@ -17,16 +17,15 @@ import the.waste.fellow.sms.adapters.SingleGroupAdapter.MyViewHolder
 import the.waste.fellow.sms.utils.Helpers
 
 /**
- * Created by R Ankit on 25-12-2016.
- * Renders a conversation as chat bubbles: received messages align to the start, sent
- * messages (persisted to content://sms/sent by SmsSender) align to the end with a tinted
- * bubble.
+ * Renders a conversation two ways:
+ *  - [isPersonal] = true  → chat bubbles (received left, sent right) for real two-way chats.
+ *  - [isPersonal] = false → full-width message cards for one-way alphanumeric sender IDs
+ *    (banks, OTPs), which have no replies and read better using the whole width.
  */
 class SingleGroupAdapter(
     private val context: Context,
     private var dataCursor: Cursor?,
-    @Suppress("UNUSED_PARAMETER") color: Int,
-    @Suppress("UNUSED_PARAMETER") savedContactName: String?,
+    private val isPersonal: Boolean,
 ) : RecyclerView.Adapter<MyViewHolder>() {
 
     private val sideMargin = (48 * context.resources.displayMetrics.density).toInt()
@@ -49,28 +48,41 @@ class SingleGroupAdapter(
                 cursor.getInt(typeIndex) == Telephony.Sms.MESSAGE_TYPE_SENT
 
         val params = holder.bubble.layoutParams as FrameLayout.LayoutParams
-        if (isSent) {
-            params.gravity = Gravity.END
-            params.marginStart = sideMargin
-            params.marginEnd = 0
-            holder.bubble.setCardBackgroundColor(
-                MaterialColors.getColor(holder.bubble, com.google.android.material.R.attr.colorPrimaryContainer)
-            )
-            holder.message.setTextColor(
-                MaterialColors.getColor(holder.message, com.google.android.material.R.attr.colorOnPrimaryContainer)
-            )
-        } else {
-            params.gravity = Gravity.START
-            params.marginStart = 0
-            params.marginEnd = sideMargin
-            holder.bubble.setCardBackgroundColor(
-                MaterialColors.getColor(holder.bubble, com.google.android.material.R.attr.colorSurfaceVariant)
-            )
-            holder.message.setTextColor(
-                MaterialColors.getColor(holder.message, com.google.android.material.R.attr.colorOnSurfaceVariant)
-            )
+        when {
+            // One-way sender id → full-width card.
+            !isPersonal -> {
+                params.width = FrameLayout.LayoutParams.MATCH_PARENT
+                params.gravity = Gravity.START
+                params.marginStart = 0
+                params.marginEnd = 0
+                tint(holder, com.google.android.material.R.attr.colorSurfaceVariant,
+                    com.google.android.material.R.attr.colorOnSurfaceVariant)
+            }
+            // Personal chat, sent by me → right-aligned tinted bubble.
+            isSent -> {
+                params.width = FrameLayout.LayoutParams.WRAP_CONTENT
+                params.gravity = Gravity.END
+                params.marginStart = sideMargin
+                params.marginEnd = 0
+                tint(holder, com.google.android.material.R.attr.colorPrimaryContainer,
+                    com.google.android.material.R.attr.colorOnPrimaryContainer)
+            }
+            // Personal chat, received → left-aligned bubble.
+            else -> {
+                params.width = FrameLayout.LayoutParams.WRAP_CONTENT
+                params.gravity = Gravity.START
+                params.marginStart = 0
+                params.marginEnd = sideMargin
+                tint(holder, com.google.android.material.R.attr.colorSurfaceVariant,
+                    com.google.android.material.R.attr.colorOnSurfaceVariant)
+            }
         }
         holder.bubble.layoutParams = params
+    }
+
+    private fun tint(holder: MyViewHolder, bgAttr: Int, textAttr: Int) {
+        holder.bubble.setCardBackgroundColor(MaterialColors.getColor(holder.bubble, bgAttr))
+        holder.message.setTextColor(MaterialColors.getColor(holder.message, textAttr))
     }
 
     fun swapCursor(cursor: Cursor?) {

@@ -27,6 +27,10 @@ object SenderNormalizer {
 
     private val PHONE_REGEX = Regex("^\\+?\\d{6,}$")
 
+    /** True for a real phone number (personal/P2P), false for an alphanumeric sender id. */
+    fun isPhoneNumber(raw: String?): Boolean =
+        !raw.isNullOrBlank() && PHONE_REGEX.matches(raw.trim())
+
     /**
      * @param raw the raw originating address as delivered by the network.
      * @param suffixLetters category-suffix letters eligible for glued-suffix stripping.

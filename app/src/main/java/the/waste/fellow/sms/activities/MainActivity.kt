@@ -238,7 +238,7 @@ class MainActivity : AppCompatActivity(),
                 null,
                 selection,
                 selectionArgs,
-                SmsContract.SORT_DESC +" limit 100")
+                SmsContract.SORT_DESC)
     }
 
     override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
