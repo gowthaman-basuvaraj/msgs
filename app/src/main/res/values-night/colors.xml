@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark-mode container colors. Without these, the light values from values/colors.xml
+         leaked into dark mode, making sent bubbles a light box with dark text. -->
+    <color name="colorPrimaryContainer">#00497D</color>
+    <color name="colorOnPrimaryContainer">#D1E4FF</color>
+</resources>
