@@ -18,6 +18,15 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '10'))
     }
 
+    parameters {
+        booleanParam(
+            name: 'RELEASE',
+            defaultValue: false,
+            description: 'Also build a signed release (production) APK. Requires the Jenkins ' +
+                         'credentials listed in the "Build Signed Release" stage.'
+        )
+    }
+
     environment {
         // Persistent tool cache (survives workspace cleanups → fast rebuilds).
         TOOLS_DIR        = "${HOME}/.android-ci"
@@ -94,6 +103,35 @@ pipeline {
                 '''
             }
         }
+
+        stage('Build Signed Release') {
+            when { expression { params.RELEASE } }
+            // Create these in Jenkins (Manage Jenkins → Credentials):
+            //   android-release-keystore  → Secret file   (the .jks/.keystore)
+            //   android-keystore-password → Secret text
+            //   android-key-alias         → Secret text
+            //   android-key-password      → Secret text
+            // The app's signingConfig reads these from the environment (see app/build.gradle).
+            steps {
+                withCredentials([
+                    file(credentialsId: 'android-release-keystore', variable: 'RELEASE_STORE_FILE'),
+                    string(credentialsId: 'android-keystore-password', variable: 'RELEASE_STORE_PASSWORD'),
+                    string(credentialsId: 'android-key-alias', variable: 'RELEASE_KEY_ALIAS'),
+                    string(credentialsId: 'android-key-password', variable: 'RELEASE_KEY_PASSWORD'),
+                ]) {
+                    sh label: 'Gradle assembleRelease (signed)', script: '''
+                        set -eu
+                        chmod +x gradlew
+                        ./gradlew --no-daemon --stacktrace assembleRelease
+
+                        # Fail loudly if an unsigned APK slipped through.
+                        APK=app/build/outputs/apk/release/app-release.apk
+                        test -f "$APK" || { echo "Signed release APK not found (unsigned build?)"; exit 1; }
+                        "$ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner" verify --verbose "$APK"
+                    '''
+                }
+            }
+        }
     }
 
     post {
@@ -102,8 +140,8 @@ pipeline {
                   allowEmptyResults: true
         }
         success {
-            archiveArtifacts artifacts: 'app/build/outputs/apk/debug/*.apk', fingerprint: true
-            sh 'echo "Artifacts:"; ls -lh app/build/outputs/apk/debug/*.apk'
+            archiveArtifacts artifacts: 'app/build/outputs/apk/**/*.apk', fingerprint: true
+            sh 'echo "Artifacts:"; find app/build/outputs/apk -name "*.apk" -exec ls -lh {} +'
         }
     }
 }
