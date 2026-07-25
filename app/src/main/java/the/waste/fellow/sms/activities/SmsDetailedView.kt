@@ -10,8 +10,9 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
-import android.widget.ImageView
+import android.widget.FrameLayout
 import android.widget.Toast
+import the.waste.fellow.sms.utils.SenderNormalizer
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -39,6 +40,8 @@ class SmsDetailedView : AppCompatActivity(),
     private var recyclerView: RecyclerView? = null
     private var etMessage: EditText? = null
     private var btSend: View? = null
+    private var replyBar: View? = null
+    private var isPersonal = false
     private var message: String? = null
     private var from_reciever = false
 
@@ -67,6 +70,10 @@ class SmsDetailedView : AppCompatActivity(),
             else
                 supportActionBar!!.setTitle(savedContactName)
         }
+        // Only real phone numbers get a reply box + chat bubbles; alphanumeric sender ids
+        // (banks, OTPs) are one-way and shown full-width.
+        isPersonal = SenderNormalizer.isPhoneNumber(contact)
+
         recyclerView = findViewById(R.id.recyclerview)
         val linearLayoutManager = LinearLayoutManager(this)
         linearLayoutManager.reverseLayout = true
@@ -74,6 +81,17 @@ class SmsDetailedView : AppCompatActivity(),
         etMessage = findViewById(R.id.etMessage)
         btSend = findViewById(R.id.btSend)
         btSend?.setOnClickListener(this)
+        replyBar = findViewById(R.id.replyBar)
+
+        if (!isPersonal) {
+            replyBar?.visibility = View.GONE
+            // Reclaim the space the reply bar would have occupied.
+            (recyclerView?.layoutParams as? FrameLayout.LayoutParams)?.let {
+                it.bottomMargin = 0
+                recyclerView?.layoutParams = it
+            }
+        }
+
         setRecyclerView(null)
         if (read != null && read == "0") setReadSMS()
     }
@@ -88,7 +106,7 @@ class SmsDetailedView : AppCompatActivity(),
 
 
     private fun setRecyclerView(cursor: Cursor?) {
-        singleGroupAdapter = SingleGroupAdapter(this, cursor, color, savedContactName)
+        singleGroupAdapter = SingleGroupAdapter(this, cursor, isPersonal)
         recyclerView!!.adapter = singleGroupAdapter
     }
 

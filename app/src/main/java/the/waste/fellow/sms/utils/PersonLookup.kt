@@ -57,14 +57,16 @@ class PersonLookup(private val context: Context) {
             val uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number))
             val nameColumn = arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME)
             c = context.contentResolver.query(uri, nameColumn, null, null, null)
+            // Null (not the raw number) when there's no matching contact, so the caller
+            // falls back to the normalized sender id instead of showing AX-INDPOST-S.
             cName = if (c == null || c.count == 0) {
-                number
+                null
             } else {
                 c.moveToFirst()
                 c.getString(0)
             }
         } catch (e: Exception) {
-            cName = number
+            cName = null
         } finally {
             if (c != null && !c.isClosed) {
                 c.close()

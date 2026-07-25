@@ -10,9 +10,12 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import the.waste.fellow.sms.R
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import the.waste.fellow.sms.auth.AuthManager
 import the.waste.fellow.sms.sync.HttpSmsSyncRepository
 import the.waste.fellow.sms.utils.AppSettings
+import the.waste.fellow.sms.utils.SenderMigration
+import kotlin.concurrent.thread
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -64,6 +67,31 @@ class SettingsActivity : AppCompatActivity() {
         override fun onPreferenceTreeClick(preference: Preference): Boolean {
             val ctx = requireContext()
             when (preference.key) {
+                "normalize_senders" -> {
+                    MaterialAlertDialogBuilder(ctx)
+                        .setTitle("Normalize stored sender IDs?")
+                        .setMessage("This rewrites the sender of existing messages in the phone's " +
+                                "SMS database to the grouped form (e.g. AX-INDPOST-S → INDPOST). " +
+                                "It can't be undone. Continue?")
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Normalize") { _, _ ->
+                            Toast.makeText(ctx, "Normalizing…", Toast.LENGTH_SHORT).show()
+                            val app = ctx.applicationContext
+                            thread {
+                                val count = SenderMigration.run(app)
+                                app.sendBroadcast(
+                                    Intent("android.intent.action.MAIN")
+                                        .setPackage(app.packageName)
+                                        .putExtra("new_sms", true)
+                                )
+                                activity?.runOnUiThread {
+                                    Toast.makeText(app, "Normalized $count messages", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                        .show()
+                    return true
+                }
                 "sync_now" -> {
                     if (AppSettings(ctx).syncConfigured) {
                         HttpSmsSyncRepository.scheduleSync(ctx, immediate = true)
