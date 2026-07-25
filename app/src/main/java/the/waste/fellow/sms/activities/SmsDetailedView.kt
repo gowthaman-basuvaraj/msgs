@@ -1,18 +1,24 @@
 package the.waste.fellow.sms.activities
 
 import android.Manifest
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.Bundle
+import android.provider.Settings
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.Toast
+import the.waste.fellow.sms.utils.AppSettings
 import the.waste.fellow.sms.utils.SenderNormalizer
+import the.waste.fellow.sms.utils.createChannel
+import the.waste.fellow.sms.utils.getChannel
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -42,6 +48,7 @@ class SmsDetailedView : AppCompatActivity(),
     private var btSend: View? = null
     private var replyBar: View? = null
     private var isPersonal = false
+    private var channelId: String = ""
     private var message: String? = null
     private var from_reciever = false
 
@@ -73,11 +80,11 @@ class SmsDetailedView : AppCompatActivity(),
         // Only real phone numbers get a reply box + chat bubbles; alphanumeric sender ids
         // (banks, OTPs) are one-way and shown full-width.
         isPersonal = SenderNormalizer.isPhoneNumber(contact)
+        // Channel id matches what SmsReceiver uses (normalized sender).
+        channelId = AppSettings(this).normalizeSender(contact)
 
         recyclerView = findViewById(R.id.recyclerview)
-        val linearLayoutManager = LinearLayoutManager(this)
-        linearLayoutManager.reverseLayout = true
-        recyclerView?.layoutManager = linearLayoutManager
+        recyclerView?.layoutManager = LinearLayoutManager(this)
         etMessage = findViewById(R.id.etMessage)
         btSend = findViewById(R.id.btSend)
         btSend?.setOnClickListener(this)
@@ -96,12 +103,38 @@ class SmsDetailedView : AppCompatActivity(),
         if (read != null && read == "0") setReadSMS()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.sms_detail_menu, menu)
+        return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val channel = getChannel(channelId)
+        val muted = channel == null || channel.importance == NotificationManager.IMPORTANCE_NONE
+        menu.findItem(R.id.action_notifications)?.setIcon(
+            if (muted) R.drawable.ic_notifications_off_24 else R.drawable.ic_notifications_active_24
+        )
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            if (from_reciever) startActivity(Intent(this, MainActivity::class.java))
-            finish()
+        when (item.itemId) {
+            android.R.id.home -> {
+                if (from_reciever) startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
+            R.id.action_notifications -> openNotificationSettings()
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    /** Opens the system per-sender notification channel settings, creating it if needed. */
+    private fun openNotificationSettings() {
+        if (getChannel(channelId) == null) createChannel(channelId, "SMS Notifications")
+        val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            .putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
+        startActivity(intent)
     }
 
 
@@ -113,6 +146,7 @@ class SmsDetailedView : AppCompatActivity(),
     override fun onResume() {
         super.onResume()
         LoaderManager.getInstance(this).initLoader(Constants.CONVERSATION_LOADER, null, this)
+        invalidateOptionsMenu()   // refresh the bell icon after returning from settings
     }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor?> {
@@ -122,12 +156,16 @@ class SmsDetailedView : AppCompatActivity(),
                 null,
                 SmsContract.SMS_SELECTION,
                 selectionArgs,
-                SmsContract.SORT_ASC)
+                // Personal chat: oldest→newest (newest at the bottom). Sender-id feed:
+                // newest first at the top.
+                if (isPersonal) SmsContract.SORT_ASC else SmsContract.SORT_DESC)
     }
 
     override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
         if (cursor != null && cursor.count > 0) {
             singleGroupAdapter!!.swapCursor(cursor)
+            // Open on the newest message: bottom for a chat, top for a feed.
+            recyclerView?.scrollToPosition(if (isPersonal) cursor.count - 1 else 0)
         } //no sms
     }
 

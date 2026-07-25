@@ -17,6 +17,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import the.waste.fellow.sms.R
 import the.waste.fellow.sms.SMS
@@ -60,16 +61,22 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
         holder.senderImage.setImageDrawable(drawable)
         sms.color = color
 
+        // Use theme colors (DayNight-aware) and set them in BOTH branches so recycled
+        // rows don't keep a previous row's emphasis in dark mode.
+        val onSurface = MaterialColors.getColor(holder.message, com.google.android.material.R.attr.colorOnSurface)
+        val onSurfaceVariant = MaterialColors.getColor(holder.message, com.google.android.material.R.attr.colorOnSurfaceVariant)
         if (sms.readState == "0") {
             holder.senderContact.setTypeface(holder.senderContact.typeface, Typeface.BOLD)
             holder.message.setTypeface(holder.message.typeface, Typeface.BOLD)
-            holder.message.setTextColor(ContextCompat.getColor(context, R.color.black))
+            holder.message.setTextColor(onSurface)
             holder.time.setTypeface(holder.time.typeface, Typeface.BOLD)
-            holder.time.setTextColor(ContextCompat.getColor(context, R.color.black))
+            holder.time.setTextColor(onSurface)
         } else {
             holder.senderContact.setTypeface(null, Typeface.NORMAL)
             holder.message.setTypeface(null, Typeface.NORMAL)
+            holder.message.setTextColor(onSurfaceVariant)
             holder.time.setTypeface(null, Typeface.NORMAL)
+            holder.time.setTextColor(onSurfaceVariant)
         }
         holder.time.text = sms.time.let { Helpers.getDate(it) }
     }
