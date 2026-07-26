@@ -54,9 +54,16 @@ class MainActivity : AppCompatActivity(),
     }
 
     private fun init() {
+        binding.recyclerview.layoutManager = LinearLayoutManager(this)
 
-        val linearLayoutManager = LinearLayoutManager(this)
-        binding.recyclerview.layoutManager = linearLayoutManager
+        // Show the cached conversations immediately (instant on reopen); the loader then
+        // refreshes them in the background. Create the adapter once and update it in place.
+        data = cache.toMutableList()
+        allConversationAdapter = AllConversationAdapter(this, data)
+        allConversationAdapter?.setItemClickListener(this)
+        binding.recyclerview.adapter = allConversationAdapter
+        binding.progressBar.visibility = if (cache.isEmpty()) View.VISIBLE else View.GONE
+
         binding.fabNew.setOnClickListener(this)
         requestNotificationPermission()
         if (checkDefaultSettings()) checkPermissions()
@@ -125,12 +132,6 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
-    private fun setRecyclerView(data: MutableList<SMS>) {
-        allConversationAdapter = AllConversationAdapter(this, data)
-        allConversationAdapter?.setItemClickListener(this)
-        binding.recyclerview.adapter = allConversationAdapter
-    }
-
     override fun onClick(view: View) {
         if (view.id == R.id.fab_new) {
             startActivity(Intent(this, NewSMSActivity::class.java))
@@ -151,7 +152,9 @@ class MainActivity : AppCompatActivity(),
         ContextCompat.registerReceiver(
             this, mReceiver, intentFilter, ContextCompat.RECEIVER_NOT_EXPORTED
         )
-        supportLoaderManager.restartLoader(Constants.ALL_SMS_LOADER, null, this@MainActivity)
+        // initLoader (not restart): if the loader already exists it delivers its cached
+        // result instantly and only re-queries when the SMS provider changes.
+        supportLoaderManager.initLoader(Constants.ALL_SMS_LOADER, null, this@MainActivity)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -242,18 +245,29 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
-        binding.progressBar.visibility = View.GONE
-        if (cursor != null && cursor.count > 0) {
-
-            //allConversationAdapter.swapCursor(cursor);
-            getAllSmsToFile(cursor)
-        } //no sms
+        if (cursor == null) {
+            binding.progressBar.visibility = View.GONE
+            return
+        }
+        // Read the cursor quickly on the main thread, then do the heavy work (contact
+        // lookups + dedup) off-thread so the UI never janks. The old list stays visible
+        // until the new one is ready — no clear, no flash.
+        val rows = extractRows(cursor)
+        val searching = mCurFilter != null
+        Thread {
+            val processed = processRows(rows)
+            runOnUiThread {
+                if (isFinishing) return@runOnUiThread
+                if (!searching) cache = processed
+                data = processed.toMutableList()
+                allConversationAdapter?.submit(processed)
+                binding.progressBar.visibility = View.GONE
+            }
+        }.start()
     }
 
     override fun onLoaderReset(loader: Loader<Cursor?>) {
-        data.clear()
-        allConversationAdapter?.notifyDataSetChanged()
-        //allConversationAdapter.swapCursor(null);
+        // Keep the cached list visible; nothing to clear.
     }
 
     override fun onQueryTextSubmit(query: String): Boolean {
@@ -271,49 +285,64 @@ class MainActivity : AppCompatActivity(),
     override fun onPause() {
         super.onPause()
         unregisterReceiver(mReceiver)
-        supportLoaderManager.destroyLoader(Constants.ALL_SMS_LOADER)
+        // Keep the loader alive so reopening shows data instantly (no reload/flash).
     }
 
-    val lookup = PersonLookup(this)
-    private fun getAllSmsToFile(c: Cursor) {
-        val lstSms: MutableList<SMS> = arrayListOf()
-        lateinit var objSMS: SMS
-        val totalSMS = c.count
+    private val lookup = PersonLookup(this)
+
+    private class RawRow(
+        val id: Long, val address: String?, val body: String?,
+        val read: String?, val date: Long, val type: String?
+    )
+
+    /** Fast, main-thread copy of the cursor rows (no contact lookups here). */
+    private fun extractRows(c: Cursor): List<RawRow> {
+        val rows = ArrayList<RawRow>(c.count)
         if (c.moveToFirst()) {
-            for (i in 0 until totalSMS) {
-                try {
-                    objSMS = SMS()
-                    objSMS.id = c.getLong(c.getColumnIndexOrThrow("_id"))
-                    val num = c.getString(c.getColumnIndexOrThrow("address"))
-                    val lp = lookup.lookupPerson(num)
-                    objSMS.address = num
-                    objSMS.normAddress = lp?.normPhone ?: num
-                    objSMS.msg = c.getString(c.getColumnIndexOrThrow("body"))
-                    objSMS.readState = c.getString(c.getColumnIndex("read"))
-                    objSMS.time = c.getLong(c.getColumnIndexOrThrow("date"))
-                    if (c.getString(c.getColumnIndexOrThrow("type")).contains("1")) {
-                        objSMS.folderName = "inbox"
-                    } else {
-                        objSMS.folderName = "sent"
-                    }
-                } catch (e: Exception) {
-                } finally {
-                    lstSms.add(objSMS)
-                    c.moveToNext()
-                }
-            }
+            val idI = c.getColumnIndexOrThrow("_id")
+            val addrI = c.getColumnIndexOrThrow("address")
+            val bodyI = c.getColumnIndexOrThrow("body")
+            val readI = c.getColumnIndex("read")
+            val dateI = c.getColumnIndexOrThrow("date")
+            val typeI = c.getColumnIndex("type")
+            do {
+                rows.add(
+                    RawRow(
+                        c.getLong(idI),
+                        c.getString(addrI),
+                        c.getString(bodyI),
+                        if (readI >= 0) c.getString(readI) else "1",
+                        c.getLong(dateI),
+                        if (typeI >= 0) c.getString(typeI) else "1"
+                    )
+                )
+            } while (c.moveToNext())
         }
-        c.close()
-        data = lstSms
-
-        //Log.d(TAG,"Size before "+data.size());
-        sortAndSetToRecycler(lstSms)
+        // Don't close the cursor — the CursorLoader owns it.
+        return rows
     }
 
-    private fun sortAndSetToRecycler(lstSms: List<SMS>?) {
-        val s: Set<SMS> = LinkedHashSet(lstSms)
-        data = ArrayList(s)
-        setRecyclerView(data)
+    /** Off-thread: normalize senders, resolve names, and dedup to one row per sender. */
+    private fun processRows(rows: List<RawRow>): List<SMS> {
+        val list = ArrayList<SMS>(rows.size)
+        for (r in rows) {
+            val sms = SMS()
+            sms.id = r.id
+            val lp = lookup.lookupPerson(r.address)
+            sms.address = r.address
+            sms.normAddress = lp?.normPhone ?: r.address
+            sms.displayName = lp?.name ?: r.address
+            sms.msg = r.body
+            sms.readState = r.read
+            sms.time = r.date
+            sms.folderName = if (r.type?.contains("1") == true) "inbox" else "sent"
+            list.add(sms)
+        }
+        return ArrayList(LinkedHashSet(list))   // dedup by normAddress (SMS.equals)
     }
 
+    companion object {
+        // Processed conversation list cached in-memory so reopening is instant.
+        private var cache: List<SMS> = emptyList()
+    }
 }

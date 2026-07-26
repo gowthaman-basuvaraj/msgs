@@ -45,18 +45,25 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
         return MyHolder(view)
     }
 
-    private val lookup = PersonLookup(this.context)
+    /** Replace the data set in place (same adapter) so the list updates without flashing. */
+    fun submit(newData: List<SMS>) {
+        data.clear()
+        data.addAll(newData)
+        notifyDataSetChanged()
+    }
+
     override fun onBindViewHolder(holder: MyHolder, position: Int) {
         val sms = data[position]
 
-        val savedContactName = lookup.lookupPerson(sms.address)?.name ?: sms.address ?: "NA"
-        Log.w("LIST", "${sms.address} => $savedContactName")
+        // Display name is precomputed off the main thread (see MainActivity); no contact
+        // lookup here, so binding/scrolling stays smooth.
+        val savedContactName = sms.displayName ?: sms.address ?: "NA"
         holder.senderContact.text = savedContactName
         holder.message.text = sms.msg
 
-        val color = savedContactName.let { generator?.getColor(it) }
-        val firstChar = savedContactName[0].toString()
-        val drawable = TextDrawable.builder().buildRound(firstChar, color!!)
+        val color = generator?.getColor(savedContactName) ?: 0
+        val firstChar = savedContactName.firstOrNull()?.toString() ?: "?"
+        val drawable = TextDrawable.builder().buildRound(firstChar, color)
 
         holder.senderImage.setImageDrawable(drawable)
         sms.color = color
