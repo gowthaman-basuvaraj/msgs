@@ -7,6 +7,7 @@ class SMS {
     var id: Long = 0
     var address: String? = null
     var normAddress: String? = null
+    var displayName: String? = null
     var msg: String? = null
     var readState //"0" for have not read sms and "1" for have read sms
             : String? = null
