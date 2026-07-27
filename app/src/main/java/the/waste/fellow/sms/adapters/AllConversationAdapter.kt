@@ -22,6 +22,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import the.waste.fellow.sms.R
 import the.waste.fellow.sms.SMS
 import the.waste.fellow.sms.adapters.AllConversationAdapter.MyHolder
+import the.waste.fellow.sms.notify.showNotifyChooser
 import the.waste.fellow.sms.utils.ColorGeneratorModified
 import the.waste.fellow.sms.utils.Helpers
 import the.waste.fellow.sms.utils.PersonLookup
@@ -122,7 +123,7 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
         }
 
         override fun onLongClick(view: View): Boolean {
-            val items = arrayOf("Delete", "Mute/Un-Mute")
+            val items = arrayOf("Delete", "Notifications")
             val adapter = ArrayAdapter(context, android.R.layout.simple_list_item_1, android.R.id.text1, items)
             MaterialAlertDialogBuilder(context)
                     .setAdapter(adapter) { dialogInterface, idx ->
@@ -130,7 +131,7 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
                         if (idx == 0)
                             deleteDialog()
                         else
-                            muteDialog()
+                            showNotifyChooser(context, data[adapterPosition].normAddress!!)
                     }
                     .show()
             return true
@@ -143,24 +144,6 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
             alert.setNegativeButton("No") { dialog, _ -> dialog.dismiss() }
             alert.create()
             alert.show()
-        }
-
-        private fun muteDialog() {
-            val senderNo = data[adapterPosition].normAddress!!
-
-            // The system channel-settings screen shows nothing (just bounces back) for a
-            // channel that doesn't exist yet — which is the case for senders whose messages
-            // predate the app, so no channel was ever created on receive. Create it first.
-            if (context.getChannel(senderNo) == null) {
-                context.createChannel(senderNo, "SMS Notifications")
-            }
-
-            val intent: Intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                    .putExtra(Settings.EXTRA_CHANNEL_ID, senderNo)
-
-            startActivity(this@AllConversationAdapter.context, intent, null)
-
         }
 
         init {
