@@ -15,4 +15,8 @@ object Constants {
     const val COLOR = "color"
     const val READ = "read"
     const val RESULT_PICK_CONTACT = 85
+
+    // Notification channels (app-wide, created in MessagesApp).
+    const val CHANNEL_OTP = "otp"
+    const val CHANNEL_MESSAGES = "messages"
 }

@@ -1,7 +1,10 @@
 package the.waste.fellow.sms.adapters
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.database.Cursor
+import android.os.Build
 import android.provider.Telephony
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -9,11 +12,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.MaterialColors
 import the.waste.fellow.sms.R
 import the.waste.fellow.sms.adapters.SingleGroupAdapter.MyViewHolder
+import the.waste.fellow.sms.notify.OtpDetector
 import the.waste.fellow.sms.utils.Helpers
 
 /**
@@ -39,9 +45,20 @@ class SingleGroupAdapter(
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         val cursor = dataCursor ?: return
         cursor.moveToPosition(position)
-        holder.message.text = cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Sms.BODY))
+        val body = cursor.getString(cursor.getColumnIndexOrThrow(Telephony.Sms.BODY)).orEmpty()
+        holder.message.text = body
         val time = cursor.getLong(cursor.getColumnIndexOrThrow(Telephony.Sms.DATE))
         holder.time.text = Helpers.getDate(time)
+
+        // Offer a Copy button when the message contains an OTP.
+        val otp = OtpDetector.extract(body)
+        if (otp.isOtp && otp.code != null) {
+            holder.copyOtp.visibility = View.VISIBLE
+            holder.copyOtp.setOnClickListener { copyOtp(otp.code) }
+        } else {
+            holder.copyOtp.visibility = View.GONE
+            holder.copyOtp.setOnClickListener(null)
+        }
 
         val typeIndex = cursor.getColumnIndex(Telephony.Sms.TYPE)
         val isSent = typeIndex >= 0 &&
@@ -85,6 +102,15 @@ class SingleGroupAdapter(
         holder.message.setTextColor(MaterialColors.getColor(holder.message, textAttr))
     }
 
+    private fun copyOtp(code: String) {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("OTP", code))
+        // Android 13+ shows its own copy confirmation; avoid a duplicate toast there.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            Toast.makeText(context, "OTP copied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     fun swapCursor(cursor: Cursor?) {
         if (dataCursor === cursor) return
         dataCursor = cursor
@@ -97,5 +123,6 @@ class SingleGroupAdapter(
         val bubble: MaterialCardView = itemView.findViewById(R.id.message_bubble)
         val message: TextView = itemView.findViewById(R.id.message)
         val time: TextView = itemView.findViewById(R.id.time)
+        val copyOtp: MaterialButton = itemView.findViewById(R.id.copyOtp)
     }
 }

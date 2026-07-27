@@ -1,24 +1,23 @@
 package the.waste.fellow.sms.activities
 
 import android.Manifest
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.Bundle
-import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.Toast
+import the.waste.fellow.sms.notify.NotifyState
+import the.waste.fellow.sms.notify.SenderNotifyPrefs
+import the.waste.fellow.sms.notify.showNotifyChooser
 import the.waste.fellow.sms.utils.AppSettings
 import the.waste.fellow.sms.utils.SenderNormalizer
-import the.waste.fellow.sms.utils.createChannel
-import the.waste.fellow.sms.utils.getChannel
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -109,8 +108,7 @@ class SmsDetailedView : AppCompatActivity(),
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val channel = getChannel(channelId)
-        val muted = channel == null || channel.importance == NotificationManager.IMPORTANCE_NONE
+        val muted = SenderNotifyPrefs(this).state(channelId) == NotifyState.MUTED
         menu.findItem(R.id.action_notifications)?.setIcon(
             if (muted) R.drawable.ic_notifications_off_24 else R.drawable.ic_notifications_active_24
         )
@@ -123,18 +121,10 @@ class SmsDetailedView : AppCompatActivity(),
                 if (from_reciever) startActivity(Intent(this, MainActivity::class.java))
                 finish()
             }
-            R.id.action_notifications -> openNotificationSettings()
+            R.id.action_notifications ->
+                showNotifyChooser(this, channelId) { invalidateOptionsMenu() }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    /** Opens the system per-sender notification channel settings, creating it if needed. */
-    private fun openNotificationSettings() {
-        if (getChannel(channelId) == null) createChannel(channelId, "SMS Notifications")
-        val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-            .putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
-        startActivity(intent)
     }
 
 

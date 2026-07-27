@@ -19,12 +19,12 @@ import the.waste.fellow.sms.activities.OtpCopyActivity
 import the.waste.fellow.sms.activities.SmsDetailedView
 import the.waste.fellow.sms.constants.Constants
 import the.waste.fellow.sms.notify.NotificationPolicy
+import the.waste.fellow.sms.notify.NotifyState
 import the.waste.fellow.sms.notify.OtpDetector
+import the.waste.fellow.sms.notify.SenderNotifyPrefs
 import the.waste.fellow.sms.services.SaveSmsService
 import the.waste.fellow.sms.utils.AppSettings
 import the.waste.fellow.sms.utils.PersonLookup
-import the.waste.fellow.sms.utils.createChannel
-import the.waste.fellow.sms.utils.getChannel
 
 /**
  * Created by R Ankit on 24-12-2016.
@@ -73,26 +73,25 @@ class SmsReceiver : BroadcastReceiver() {
 
         val otp = OtpDetector.extract(message)
 
-        // Baseline whitelist state: an un-muted channel, or the global default-notify pref.
-        val existingChannel = context.getChannel(senderNo)
-            ?: context.createChannel(senderNo, "SMS Notifications")
-        val baselineNotify = (existingChannel != null &&
-                existingChannel.importance != NotificationManager.IMPORTANCE_NONE) ||
-                AppSettings(context).defaultNotify
-
-        val shouldNotify = NotificationPolicy(context)
-            .shouldNotify(senderNo, message, baselineNotify)
+        // Three-state per-sender preference:
+        //   MUTED   -> never notify (everything silenced).
+        //   UNMUTED -> notify every message.
+        //   DEFAULT -> neither: notify only when an OTP is present.
+        val state = SenderNotifyPrefs(context).state(senderNo)
+        val baseline = when (state) {
+            NotifyState.MUTED -> false
+            NotifyState.UNMUTED -> true
+            NotifyState.DEFAULT -> otp.isOtp || AppSettings(context).defaultNotify
+        }
+        // Muted is absolute; otherwise keyword rules may still override the baseline.
+        val shouldNotify = state != NotifyState.MUTED &&
+                NotificationPolicy(context).shouldNotify(senderNo, message, baseline)
 
         if (shouldNotify) {
             if (otp.isOtp && otp.code != null) {
-                val otpChanId = "OTP from $senderNo"
-                context.getChannel(otpChanId)
-                    ?: context.createChannel(
-                        otpChanId, "OTP Notifications", true, NotificationManager.IMPORTANCE_HIGH
-                    )
-                showOTP(senderNo, otp.code, context, otpChanId)
+                showOTP(senderNo, otp.code, context)
             } else {
-                issueNotification(context, senderNo, message, senderNo)
+                issueNotification(context, senderNo, message)
             }
         }
 
@@ -101,9 +100,9 @@ class SmsReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun showOTP(from: String, otp: String, context: Context, otpChannel: String) {
+    private fun showOTP(from: String, otp: String, context: Context) {
         val title = "OTP from $from"
-        val builder = NotificationCompat.Builder(context, otpChannel)
+        val builder = NotificationCompat.Builder(context, Constants.CHANNEL_OTP)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(otp)
@@ -138,7 +137,7 @@ class SmsReceiver : BroadcastReceiver() {
         context.startService(serviceIntent)
     }
 
-    private fun issueNotification(context: Context, senderNo: String, message: String, cn: String) {
+    private fun issueNotification(context: Context, senderNo: String, message: String) {
         val resultIntent = Intent(context, SmsDetailedView::class.java)
         resultIntent.putExtra(Constants.CONTACT_NAME, senderNo)
         resultIntent.putExtra(Constants.FROM_SMS_RECIEVER, true)
@@ -149,10 +148,10 @@ class SmsReceiver : BroadcastReceiver() {
         val icon = BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher)
         val mNotifyMgr = context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        val mBuilder = NotificationCompat.Builder(context, cn)
+        val mBuilder = NotificationCompat.Builder(context, Constants.CHANNEL_MESSAGES)
             .setLargeIcon(icon)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle(cn)
+            .setContentTitle(senderNo)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setAutoCancel(true)
             .setContentText(message)
