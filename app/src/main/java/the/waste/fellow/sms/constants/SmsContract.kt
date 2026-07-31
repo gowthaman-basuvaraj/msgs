@@ -20,6 +20,7 @@ object SmsContract {
     const val SMS_SELECTION_ID = "_id = ? "
     const val COLUMN_ID = "_id"
     const val SMS_SELECTION_SEARCH = "address LIKE ? OR body LIKE ?"
+    const val SMS_SELECTION_CONV_SEARCH = "address = ? AND body LIKE ?"
     const val SORT_DESC = "date DESC"
     const val SORT_ASC = "date ASC"
 }
