@@ -141,15 +141,34 @@ class SmsDetailedView : AppCompatActivity(),
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor?> {
         val selectionArgs = arrayOf(contact)
+        val limit = AppSettings(this).conversationLimit
+        // Only ever load the newest `limit` messages.
+        val order = if (isPersonal) {
+            // Personal chat: oldest→newest (newest at the bottom). "newest N ascending" =
+            // skip everything before the last N, so the display order stays unchanged.
+            val offset = maxOf(0, countMessages(selectionArgs) - limit)
+            SmsContract.SORT_ASC + " limit $limit offset $offset"
+        } else {
+            // Sender-id feed: newest first at the top.
+            SmsContract.SORT_DESC + " limit $limit"
+        }
         return CursorLoader(this,
                 SmsContract.CONVERSATION_URI,
                 null,
                 SmsContract.SMS_SELECTION,
                 selectionArgs,
-                // Personal chat: oldest→newest (newest at the bottom). Sender-id feed:
-                // newest first at the top.
-                if (isPersonal) SmsContract.SORT_ASC else SmsContract.SORT_DESC)
+                order)
     }
+
+    /** Total messages in this conversation, used to offset to the newest page. */
+    private fun countMessages(selectionArgs: Array<String?>): Int =
+        contentResolver.query(
+            SmsContract.CONVERSATION_URI,
+            arrayOf("_id"),
+            SmsContract.SMS_SELECTION,
+            selectionArgs,
+            null
+        )?.use { it.count } ?: 0
 
     override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
         if (cursor != null && cursor.count > 0) {
