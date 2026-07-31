@@ -30,6 +30,7 @@ import the.waste.fellow.sms.adapters.ItemCLickListener
 import the.waste.fellow.sms.constants.Constants
 import the.waste.fellow.sms.constants.SmsContract
 import the.waste.fellow.sms.databinding.ActivityMainBinding
+import the.waste.fellow.sms.utils.AppSettings
 import the.waste.fellow.sms.utils.PersonLookup
 import java.util.*
 import kotlin.collections.ArrayList
@@ -241,7 +242,7 @@ class MainActivity : AppCompatActivity(),
                 null,
                 selection,
                 selectionArgs,
-                SmsContract.SORT_DESC + " limit 2500")
+                SmsContract.SORT_DESC + " limit " + AppSettings(this).listLimit)
     }
 
     override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {

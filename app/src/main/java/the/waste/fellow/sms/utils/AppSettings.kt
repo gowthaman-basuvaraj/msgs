@@ -34,6 +34,19 @@ class AppSettings(context: Context) {
     fun normalizeSender(raw: String?): String =
         SenderNormalizer.normalize(raw, suffixLetters, stripGluedSuffix)
 
+    // ---- Loading ----
+
+    /** How many messages the main list loads before grouping into senders. */
+    val listLimit: Int
+        get() = readPositiveInt(KEY_LIST_LIMIT, DEFAULT_LIST_LIMIT)
+
+    /** How many (newest) messages a sender's conversation loads on open. */
+    val conversationLimit: Int
+        get() = readPositiveInt(KEY_CONVERSATION_LIMIT, DEFAULT_CONVERSATION_LIMIT)
+
+    private fun readPositiveInt(key: String, default: Int): Int =
+        prefs.getString(key, null)?.trim()?.toIntOrNull()?.takeIf { it > 0 } ?: default
+
     // ---- Server sync (sms_web_api) ----
 
     /** Master switch for forwarding received messages to the server. */
@@ -87,6 +100,10 @@ class AppSettings(context: Context) {
         const val KEY_SYNC_SIM = "sync_sim"
         const val KEY_SYNC_ISSUER = "sync_issuer"
         const val KEY_SYNC_CLIENT_ID = "sync_client_id"
+        const val KEY_LIST_LIMIT = "list_limit"
+        const val KEY_CONVERSATION_LIMIT = "conversation_limit"
+        const val DEFAULT_LIST_LIMIT = 1000
+        const val DEFAULT_CONVERSATION_LIMIT = 100
         private const val DEFAULT_SUFFIX_STRING = "GSPT"
         private const val DEFAULT_ISSUER = "https://auth.readymixerp.com/realms/rmc-dev"
         private const val DEFAULT_CLIENT_ID = "rmc"

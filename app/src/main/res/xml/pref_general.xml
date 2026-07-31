@@ -3,6 +3,24 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <PreferenceCategory app:title="Loading">
+
+        <EditTextPreference
+            app:key="list_limit"
+            app:defaultValue="1000"
+            app:title="Messages to load in the list"
+            app:summary="How many recent messages the main list scans before grouping into senders (default 1000)"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="conversation_limit"
+            app:defaultValue="100"
+            app:title="Messages to load per sender"
+            app:summary="How many of the newest messages open when you tap a sender (default 100)"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="Sender grouping">
 
         <EditTextPreference

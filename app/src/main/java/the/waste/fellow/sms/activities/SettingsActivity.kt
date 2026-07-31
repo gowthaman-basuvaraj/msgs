@@ -45,6 +45,13 @@ class SettingsActivity : AppCompatActivity() {
                     editText.inputType =
                         InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
                 }
+
+            // The load limits accept whole numbers only.
+            for (key in listOf(AppSettings.KEY_LIST_LIMIT, AppSettings.KEY_CONVERSATION_LIMIT)) {
+                findPreference<EditTextPreference>(key)?.setOnBindEditTextListener { editText ->
+                    editText.inputType = InputType.TYPE_CLASS_NUMBER
+                }
+            }
         }
 
         override fun onResume() {
