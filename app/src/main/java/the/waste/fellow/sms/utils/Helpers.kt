@@ -23,8 +23,8 @@ import java.util.*
 object Helpers {
 
     fun getDate(milliSeconds: Long): String {
-        val dateFormat = "dd/MM/yyyy"
-        val formatter = SimpleDateFormat(dateFormat)
+        val dateFormat = "dd/MM/yyyy HH:mm"
+        val formatter = SimpleDateFormat(dateFormat, Locale.getDefault())
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = milliSeconds
         return formatter.format(calendar.time)
