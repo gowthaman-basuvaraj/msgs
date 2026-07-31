@@ -19,6 +19,7 @@ import the.waste.fellow.sms.notify.showNotifyChooser
 import the.waste.fellow.sms.utils.AppSettings
 import the.waste.fellow.sms.utils.SenderNormalizer
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import the.waste.fellow.sms.utils.SmsSender
@@ -37,6 +38,7 @@ import the.waste.fellow.sms.services.UpdateSMSService
 
 class SmsDetailedView : AppCompatActivity(),
         LoaderManager.LoaderCallbacks<Cursor?>,
+        SearchView.OnQueryTextListener,
         View.OnClickListener {
 
     private var contact: String? = null
@@ -47,6 +49,7 @@ class SmsDetailedView : AppCompatActivity(),
     private var btSend: View? = null
     private var replyBar: View? = null
     private var isPersonal = false
+    private var searchFilter: String? = null
     private var channelId: String = ""
     private var message: String? = null
     private var from_reciever = false
@@ -104,7 +107,27 @@ class SmsDetailedView : AppCompatActivity(),
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.sms_detail_menu, menu)
+        (menu.findItem(R.id.action_search)?.actionView as? SearchView)?.let { searchView ->
+            searchView.queryHint = getString(R.string.search_hint)
+            searchView.setOnQueryTextListener(this)
+        }
         return true
+    }
+
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        applyFilter(query)
+        return true
+    }
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        applyFilter(newText)
+        return true
+    }
+
+    /** Re-run the conversation query, filtered to messages containing [text] (or unfiltered). */
+    private fun applyFilter(text: String?) {
+        searchFilter = if (text.isNullOrEmpty()) null else text
+        LoaderManager.getInstance(this).restartLoader(Constants.CONVERSATION_LOADER, null, this)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
@@ -140,17 +163,29 @@ class SmsDetailedView : AppCompatActivity(),
     }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor?> {
+        val filter = searchFilter
+        // Personal chat: oldest→newest (newest at the bottom). Sender-id feed: newest first.
+        val direction = if (isPersonal) SmsContract.SORT_ASC else SmsContract.SORT_DESC
+
+        if (filter != null) {
+            // Search spans the whole conversation, not just the newest page.
+            return CursorLoader(this,
+                    SmsContract.CONVERSATION_URI,
+                    null,
+                    SmsContract.SMS_SELECTION_CONV_SEARCH,
+                    arrayOf(contact, "%$filter%"),
+                    direction)
+        }
+
         val selectionArgs = arrayOf(contact)
         val limit = AppSettings(this).conversationLimit
-        // Only ever load the newest `limit` messages.
+        // Only ever load the newest `limit` messages. For an ascending chat, "newest N
+        // ascending" = skip everything before the last N, so the display order is unchanged.
         val order = if (isPersonal) {
-            // Personal chat: oldest→newest (newest at the bottom). "newest N ascending" =
-            // skip everything before the last N, so the display order stays unchanged.
             val offset = maxOf(0, countMessages(selectionArgs) - limit)
-            SmsContract.SORT_ASC + " limit $limit offset $offset"
+            "$direction limit $limit offset $offset"
         } else {
-            // Sender-id feed: newest first at the top.
-            SmsContract.SORT_DESC + " limit $limit"
+            "$direction limit $limit"
         }
         return CursorLoader(this,
                 SmsContract.CONVERSATION_URI,
@@ -171,11 +206,12 @@ class SmsDetailedView : AppCompatActivity(),
         )?.use { it.count } ?: 0
 
     override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
+        // Swap even on an empty result so a search with no matches clears the list.
+        singleGroupAdapter!!.swapCursor(cursor)
         if (cursor != null && cursor.count > 0) {
-            singleGroupAdapter!!.swapCursor(cursor)
             // Open on the newest message: bottom for a chat, top for a feed.
             recyclerView?.scrollToPosition(if (isPersonal) cursor.count - 1 else 0)
-        } //no sms
+        }
     }
 
     private fun setReadSMS() {
