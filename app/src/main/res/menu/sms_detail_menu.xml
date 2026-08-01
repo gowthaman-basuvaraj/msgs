@@ -15,4 +15,9 @@
         android:title="Notifications"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/action_retention"
+        android:title="Auto-delete old messages"
+        app:showAsAction="never" />
+
 </menu>

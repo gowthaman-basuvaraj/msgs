@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import com.google.android.material.color.DynamicColors
 import the.waste.fellow.sms.constants.Constants
+import the.waste.fellow.sms.retention.RetentionCleaner
 import the.waste.fellow.sms.sync.HttpSmsSyncRepository
 import the.waste.fellow.sms.sync.SmsSync
 import the.waste.fellow.sms.utils.AppSettings
@@ -27,6 +28,9 @@ class MessagesApp : Application() {
         if (AppSettings(this).syncConfigured) {
             HttpSmsSyncRepository.scheduleSync(this)
         }
+
+        // Enforce per-sender retention in the background (no-ops when no sender has a window).
+        RetentionCleaner.schedulePeriodic(this)
     }
 
     // App-wide channels; whether a notification is posted is decided per-sender in

@@ -16,6 +16,7 @@ import android.widget.Toast
 import the.waste.fellow.sms.notify.NotifyState
 import the.waste.fellow.sms.notify.SenderNotifyPrefs
 import the.waste.fellow.sms.notify.showNotifyChooser
+import the.waste.fellow.sms.retention.showRetentionChooser
 import the.waste.fellow.sms.utils.AppSettings
 import the.waste.fellow.sms.utils.SenderNormalizer
 import androidx.appcompat.app.AppCompatActivity
@@ -146,6 +147,8 @@ class SmsDetailedView : AppCompatActivity(),
             }
             R.id.action_notifications ->
                 showNotifyChooser(this, channelId) { invalidateOptionsMenu() }
+            R.id.action_retention ->
+                showRetentionChooser(this, channelId)
         }
         return super.onOptionsItemSelected(item)
     }
