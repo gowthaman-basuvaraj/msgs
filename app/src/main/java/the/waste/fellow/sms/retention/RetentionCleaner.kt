@@ -68,14 +68,14 @@ object RetentionCleaner {
         )
     }
 
-    /** Daily background cleanup, so retention applies even when the app is rarely opened. */
+    /** Hourly background cleanup, so retention applies even when the app is rarely opened. */
     fun schedulePeriodic(context: Context) {
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             RetentionWorker.PERIODIC_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            PeriodicWorkRequestBuilder<RetentionWorker>(1, TimeUnit.DAYS)
-                .setInitialDelay(1, TimeUnit.HOURS)
-                .build()
+            // UPDATE (not KEEP) so a change to the interval replaces any previously-scheduled
+            // work instead of being ignored.
+            ExistingPeriodicWorkPolicy.UPDATE,
+            PeriodicWorkRequestBuilder<RetentionWorker>(1, TimeUnit.HOURS).build()
         )
     }
 }
