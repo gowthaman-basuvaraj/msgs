@@ -17,7 +17,7 @@
 
     <item
         android:id="@+id/action_retention"
-        android:title="Auto-delete old messages"
+        android:title="Keep only recent messages"
         app:showAsAction="never" />
 
 </menu>

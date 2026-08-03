@@ -11,16 +11,14 @@ import the.waste.fellow.sms.utils.AppSettings
 import java.util.concurrent.TimeUnit
 
 /**
- * Deletes messages that have outlived their sender's retention window. Only senders with an
- * explicit window are touched; everything else is kept forever (the default).
+ * Trims each capped sender down to its newest N messages, deleting the rest. Only senders
+ * with an explicit cap are touched; everything else is kept in full (the default).
  *
  * A message's sender is matched by normalizing its stored address with the current settings,
- * so a rule set on the grouped id (e.g. "INDPOST") covers every raw header that maps to it
+ * so a cap set on the grouped id (e.g. "INDPOST") covers every raw header that maps to it
  * (AX-INDPOST-S, VM-INDPOST, …) whether or not the SMS database was normalized in place.
  */
 object RetentionCleaner {
-
-    private const val DAY_MS = 86_400_000L
 
     /** Runs a cleanup pass synchronously; returns the number of messages deleted. */
     fun run(context: Context): Int {
@@ -28,26 +26,24 @@ object RetentionCleaner {
         if (rules.isEmpty()) return 0
 
         val settings = AppSettings(context)
-        val now = System.currentTimeMillis()
-        // A message can only qualify if it is older than the strictest window, so pre-filter
-        // to that horizon and decide per-message against its own sender's rule.
-        val newestCutoff = now - rules.values.min() * DAY_MS
-
+        // Walk newest → oldest; keep the first `keep` per sender, delete the rest.
+        val kept = HashMap<String, Int>()
         val ids = ArrayList<Long>()
         context.contentResolver.query(
             SmsContract.CONVERSATION_URI,
-            arrayOf(SmsContract.COLUMN_ID, "address", "date"),
-            "date < ?",
-            arrayOf(newestCutoff.toString()),
-            null
+            arrayOf(SmsContract.COLUMN_ID, "address"),
+            null,
+            null,
+            SmsContract.SORT_DESC
         )?.use { c ->
             val idIdx = c.getColumnIndexOrThrow(SmsContract.COLUMN_ID)
             val addrIdx = c.getColumnIndexOrThrow("address")
-            val dateIdx = c.getColumnIndexOrThrow("date")
             while (c.moveToNext()) {
                 val address = c.getString(addrIdx) ?: continue
-                val days = rules[settings.normalizeSender(address)] ?: continue
-                if (c.getLong(dateIdx) < now - days * DAY_MS) ids.add(c.getLong(idIdx))
+                val sender = settings.normalizeSender(address)
+                val keep = rules[sender] ?: continue
+                val soFar = kept.getOrDefault(sender, 0)
+                if (soFar >= keep) ids.add(c.getLong(idIdx)) else kept[sender] = soFar + 1
             }
         }
         if (ids.isEmpty()) return 0
