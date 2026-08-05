@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
@@ -20,6 +21,8 @@ import com.google.android.material.color.MaterialColors
 import the.waste.fellow.sms.R
 import the.waste.fellow.sms.adapters.SingleGroupAdapter.MyViewHolder
 import the.waste.fellow.sms.notify.OtpDetector
+import the.waste.fellow.sms.sync.PendingSyncStore
+import the.waste.fellow.sms.utils.AppSettings
 import the.waste.fellow.sms.utils.Helpers
 
 /**
@@ -35,6 +38,26 @@ class SingleGroupAdapter(
 ) : RecyclerView.Adapter<MyViewHolder>() {
 
     private val sideMargin = (48 * context.resources.displayMetrics.density).toInt()
+
+    // Per-message sync status is only meaningful (and only shown) when server sync is set up.
+    private val syncOn = AppSettings(context).syncConfigured
+    // Keys of messages still awaiting upload; a received message not in here counts as synced.
+    // Keyed by (date_sent, body), which is exactly what the queue stores for an inbound SMS.
+    private var pendingKeys: Set<String> = loadPending()
+
+    private fun loadPending(): Set<String> =
+        if (!syncOn) emptySet()
+        else PendingSyncStore(context).all().map { syncKey(it.date, it.text) }.toSet()
+
+    // date_sent + body identifies an inbound message; this is exactly what the queue stores.
+    private fun syncKey(dateSent: Long, body: String) = "$dateSent|$body"
+
+    /** Recompute sync state from the queue (e.g. on resume, after uploads may have drained). */
+    fun refreshSyncState() {
+        if (!syncOn) return
+        pendingKeys = loadPending()
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
         val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -95,6 +118,21 @@ class SingleGroupAdapter(
             }
         }
         holder.bubble.layoutParams = params
+
+        // Subtle sync status — only for received messages, and only when server sync is on.
+        // (Outbound messages are never synced; the server is a received-SMS forwarder.)
+        if (syncOn && !isSent) {
+            val dateSent = cursor.getLong(cursor.getColumnIndexOrThrow(Telephony.Sms.DATE_SENT))
+            val synced = syncKey(dateSent, body) !in pendingKeys
+            holder.syncStatus.setImageResource(
+                if (synced) R.drawable.ic_sync_done_16 else R.drawable.ic_sync_pending_16
+            )
+            holder.syncStatus.contentDescription =
+                context.getString(if (synced) R.string.synced else R.string.sync_pending)
+            holder.syncStatus.visibility = View.VISIBLE
+        } else {
+            holder.syncStatus.visibility = View.GONE
+        }
     }
 
     private fun tint(holder: MyViewHolder, bgAttr: Int, textAttr: Int) {
@@ -114,6 +152,7 @@ class SingleGroupAdapter(
     fun swapCursor(cursor: Cursor?) {
         if (dataCursor === cursor) return
         dataCursor = cursor
+        pendingKeys = loadPending()
         if (cursor != null) notifyDataSetChanged()
     }
 
@@ -124,5 +163,6 @@ class SingleGroupAdapter(
         val message: TextView = itemView.findViewById(R.id.message)
         val time: TextView = itemView.findViewById(R.id.time)
         val copyOtp: MaterialButton = itemView.findViewById(R.id.copyOtp)
+        val syncStatus: ImageView = itemView.findViewById(R.id.sync_status)
     }
 }

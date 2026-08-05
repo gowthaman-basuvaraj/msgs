@@ -25,5 +25,7 @@
     <string name="hint_phone">Enter Phone Number</string>
     <string name="hint_msg">Enter SMS</string>
     <string name="action_send">Send Sms</string>
+    <string name="synced">Synced</string>
+    <string name="sync_pending">Sync pending</string>
 
 </resources>

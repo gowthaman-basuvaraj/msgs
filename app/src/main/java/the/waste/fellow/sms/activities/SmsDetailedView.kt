@@ -163,6 +163,8 @@ class SmsDetailedView : AppCompatActivity(),
         super.onResume()
         LoaderManager.getInstance(this).initLoader(Constants.CONVERSATION_LOADER, null, this)
         invalidateOptionsMenu()   // refresh the bell icon after returning from settings
+        // Re-check sync status: uploads may have drained while we were away.
+        singleGroupAdapter?.refreshSyncState()
     }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor?> {
