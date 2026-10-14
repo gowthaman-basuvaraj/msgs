@@ -17,6 +17,7 @@ import androidx.core.app.NotificationCompat
 import the.waste.fellow.sms.R
 import the.waste.fellow.sms.activities.OtpCopyActivity
 import the.waste.fellow.sms.activities.SmsDetailedView
+import the.waste.fellow.sms.block.BlockedSenderPrefs
 import the.waste.fellow.sms.constants.Constants
 import the.waste.fellow.sms.notify.NotificationPolicy
 import the.waste.fellow.sms.notify.NotifyState
@@ -70,6 +71,14 @@ class SmsReceiver : BroadcastReceiver() {
         // stripped core so the same sender coalesces. See PersonLookup / SenderNormalizer.
         val lookupPerson = PersonLookup(context).lookupPerson(senderNoOriginal)
         val senderNo = lookupPerson?.normPhone ?: senderNoOriginal
+
+        // Blocked sender: drop the message right here. As the default SMS app we are the
+        // only writer for SMS_DELIVER, so returning before saveSmsInInbox means it is never
+        // stored, never notified and never queued for sync — i.e. deleted on arrival.
+        if (BlockedSenderPrefs(context).isBlocked(senderNo)) {
+            Log.d(TAG, "blocked sender $senderNo — message dropped")
+            return
+        }
 
         val otp = OtpDetector.extract(message)
 

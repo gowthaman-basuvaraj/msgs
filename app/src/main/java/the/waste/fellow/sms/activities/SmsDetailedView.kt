@@ -13,6 +13,8 @@ import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.Toast
+import the.waste.fellow.sms.block.BlockedSenderPrefs
+import the.waste.fellow.sms.block.showBlockChooser
 import the.waste.fellow.sms.notify.NotifyState
 import the.waste.fellow.sms.notify.SenderNotifyPrefs
 import the.waste.fellow.sms.notify.showNotifyChooser
@@ -136,6 +138,9 @@ class SmsDetailedView : AppCompatActivity(),
         menu.findItem(R.id.action_notifications)?.setIcon(
             if (muted) R.drawable.ic_notifications_off_24 else R.drawable.ic_notifications_active_24
         )
+        val blocked = BlockedSenderPrefs(this).isBlocked(channelId)
+        menu.findItem(R.id.action_block)?.title =
+            if (blocked) "Unblock sender" else "Block sender"
         return super.onPrepareOptionsMenu(menu)
     }
 
@@ -149,6 +154,8 @@ class SmsDetailedView : AppCompatActivity(),
                 showNotifyChooser(this, channelId) { invalidateOptionsMenu() }
             R.id.action_retention ->
                 showRetentionChooser(this, channelId)
+            R.id.action_block ->
+                showBlockChooser(this, channelId) { invalidateOptionsMenu() }
         }
         return super.onOptionsItemSelected(item)
     }

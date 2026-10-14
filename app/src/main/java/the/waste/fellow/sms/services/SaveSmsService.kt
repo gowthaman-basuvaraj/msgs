@@ -3,6 +3,7 @@ package the.waste.fellow.sms.services
 import android.app.IntentService
 import android.content.ContentValues
 import android.content.Intent
+import the.waste.fellow.sms.block.BlockedSenderPrefs
 import the.waste.fellow.sms.constants.SmsContract
 import the.waste.fellow.sms.sync.SmsSync
 import the.waste.fellow.sms.sync.SyncDirection
@@ -17,6 +18,11 @@ class SaveSmsService : IntentService("SaveService") {
         val senderNo = intent!!.getStringExtra("sender_no")
         val message = intent.getStringExtra("message")
         val time = intent.getLongExtra("date", 0)
+
+        // Second line of defence: a blocked sender's message is never stored nor synced,
+        // even if it reached this service (e.g. the block landed after the broadcast).
+        if (BlockedSenderPrefs(this).isBlocked(senderNo)) return
+
         val values = ContentValues()
         values.put("address", senderNo)
         values.put("body", message)

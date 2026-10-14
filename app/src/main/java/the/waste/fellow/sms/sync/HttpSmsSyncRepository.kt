@@ -7,6 +7,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import the.waste.fellow.sms.block.BlockedSenderPrefs
 import the.waste.fellow.sms.utils.AppSettings
 import java.util.concurrent.TimeUnit
 
@@ -26,6 +27,8 @@ class HttpSmsSyncRepository(context: Context) : SmsSyncRepository {
 
     override fun enqueueInbound(message: SyncableSms) {
         if (!settings.syncEnabled) return
+        // Blocked senders are never forwarded to the server.
+        if (BlockedSenderPrefs(app).isBlocked(message.address)) return
         store.add(message.address, message.body, message.date)
         scheduleSync(app)
     }

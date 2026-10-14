@@ -22,6 +22,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import the.waste.fellow.sms.R
 import the.waste.fellow.sms.SMS
 import the.waste.fellow.sms.adapters.AllConversationAdapter.MyHolder
+import the.waste.fellow.sms.block.BlockedSenderPrefs
+import the.waste.fellow.sms.block.showBlockChooser
 import the.waste.fellow.sms.notify.showNotifyChooser
 import the.waste.fellow.sms.utils.ColorGeneratorModified
 import the.waste.fellow.sms.utils.Helpers
@@ -123,15 +125,18 @@ class AllConversationAdapter(private val context: Context, private val data: Mut
         }
 
         override fun onLongClick(view: View): Boolean {
-            val items = arrayOf("Delete", "Notifications")
+            val sender = data[adapterPosition].normAddress!!
+            val blocked = BlockedSenderPrefs(context).isBlocked(sender)
+            val items = arrayOf("Delete", "Notifications", if (blocked) "Unblock sender" else "Block sender")
             val adapter = ArrayAdapter(context, android.R.layout.simple_list_item_1, android.R.id.text1, items)
             MaterialAlertDialogBuilder(context)
                     .setAdapter(adapter) { dialogInterface, idx ->
                         dialogInterface.dismiss()
-                        if (idx == 0)
-                            deleteDialog()
-                        else
-                            showNotifyChooser(context, data[adapterPosition].normAddress!!)
+                        when (idx) {
+                            0 -> deleteDialog()
+                            1 -> showNotifyChooser(context, sender)
+                            else -> showBlockChooser(context, sender)
+                        }
                     }
                     .show()
             return true

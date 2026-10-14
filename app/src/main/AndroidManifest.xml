@@ -116,6 +116,11 @@
             android:label="Keyword rules" />
 
         <activity
+            android:name="the.waste.fellow.sms.activities.BlockedSendersActivity"
+            android:exported="false"
+            android:label="Blocked senders" />
+
+        <activity
             android:name="the.waste.fellow.sms.activities.LoginActivity"
             android:exported="false"
             android:theme="@style/TranslucentAppTheme" />

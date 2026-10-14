@@ -62,6 +62,19 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="Blocking">
+
+        <Preference
+            app:key="blocked_senders"
+            app:title="Blocked senders"
+            app:summary="Messages from blocked senders are deleted on arrival and never synced">
+            <intent
+                android:targetPackage="the.waste.fellow.sms"
+                android:targetClass="the.waste.fellow.sms.activities.BlockedSendersActivity" />
+        </Preference>
+
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="Server sync">
 
         <SwitchPreferenceCompat

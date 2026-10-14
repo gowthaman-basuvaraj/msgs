@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import the.waste.fellow.sms.auth.AuthManager
+import the.waste.fellow.sms.block.BlockedSenderPrefs
 import the.waste.fellow.sms.utils.AppSettings
 
 /**
@@ -42,7 +43,14 @@ class SyncWorker(
         val done = mutableListOf<Long>()
         var retryNeeded = false
 
+        val blocked = BlockedSenderPrefs(applicationContext)
+
         for (entry in entries) {
+            // Blocked after the message was queued: discard instead of uploading.
+            if (blocked.isBlocked(entry.sender)) {
+                done.add(entry.id)
+                continue
+            }
             val outcome = SyncApi.postSendMessage(
                 baseUrl = settings.syncBaseUrl,
                 token = token,

@@ -12,6 +12,7 @@ import androidx.preference.PreferenceFragmentCompat
 import the.waste.fellow.sms.R
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import the.waste.fellow.sms.auth.AuthManager
+import the.waste.fellow.sms.block.BlockedSenderPrefs
 import the.waste.fellow.sms.sync.HttpSmsSyncRepository
 import the.waste.fellow.sms.utils.AppSettings
 import the.waste.fellow.sms.utils.SenderMigration
@@ -57,6 +58,16 @@ class SettingsActivity : AppCompatActivity() {
         override fun onResume() {
             super.onResume()
             refreshSignInState()
+            refreshBlockedCount()
+        }
+
+        private fun refreshBlockedCount() {
+            val pref = findPreference<Preference>("blocked_senders") ?: return
+            val count = BlockedSenderPrefs(requireContext()).count()
+            pref.summary = if (count == 0)
+                "No senders blocked — messages from blocked senders are deleted on arrival and never synced"
+            else
+                "$count blocked — their messages are deleted on arrival and never synced"
         }
 
         private fun refreshSignInState() {
